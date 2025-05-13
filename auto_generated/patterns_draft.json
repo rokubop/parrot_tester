@@ -4,7 +4,7 @@
       "ah"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 6,
       ">probability": 0.93
     },
     "throttle": {
@@ -18,7 +18,7 @@
       "Alveolar click"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 10,
       ">probability": 0.99
     },
     "throttle": {
@@ -36,12 +36,12 @@
       "yi"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 8,
       ">probability": 0.96
     },
     "graceperiod": 0.1,
     "grace_threshold": {
-      ">power": 1,
+      ">power": 7,
       ">probability": 0.6
     },
     "throttle": {
@@ -58,7 +58,7 @@
       "ay"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 10,
       ">probability": 0.99
     },
     "throttle": {
@@ -75,7 +75,7 @@
       "er"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 10,
       ">probability": 0.9
     },
     "throttle": {
@@ -89,7 +89,7 @@
       "guh"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 15,
       ">probability": 0.998,
       "<f0": 450
     },
@@ -107,12 +107,12 @@
       "ss"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 5,
       ">probability": 0.91
     },
     "graceperiod": 0.1,
     "grace_threshold": {
-      ">power": 1,
+      ">power": 0.2,
       ">probability": 0.4
     },
     "throttle": {
@@ -127,7 +127,7 @@
       "nn"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 14,
       ">probability": 0.8
     },
     "throttle": {
@@ -143,7 +143,7 @@
       "oh"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 6,
       ">probability": 0.98,
       "<f1": 450
     },
@@ -160,7 +160,7 @@
       "Palate"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 10,
       ">probability": 0.9
     },
     "throttle": {
@@ -174,7 +174,7 @@
       "pop"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 6,
       ">probability": 0.99
     },
     "throttle": {
@@ -191,12 +191,12 @@
       "sh"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 5,
       ">probability": 0.91
     },
     "graceperiod": 0.1,
     "grace_threshold": {
-      ">power": 1,
+      ">power": 0.1,
       ">probability": 0.4
     },
     "throttle": {
@@ -211,7 +211,7 @@
       "tut"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 10,
       ">probability": 0.9
     },
     "throttle": {
@@ -225,7 +225,7 @@
       "t"
     ],
     "threshold": {
-      ">power": 1,
+      ">power": 2,
       ">probability": 0.98
     },
     "throttle": {

@@ -5,7 +5,11 @@ import re
 import random
 import math
 import time
-from .utils import parrot_tester_initialize, restore_patterns
+from .utils import (
+    parrot_tester_initialize,
+    restore_patterns,
+    get_pattern_json,
+)
 
 pp = pprint.PrettyPrinter()
 
@@ -947,7 +951,7 @@ def legend():
         ],
         tr()[
             td()[text("Throttled")],
-            td()[text("!", color="C6053D", font_weight="bold")],
+            td()[icon("clock", size=16, color="FFCC00")],
         ],
         tr()[
             td()[text("Not detected")],
@@ -1049,13 +1053,23 @@ def graph_test():
         *[div(position="absolute", left=f"{line['time_fraction'] * 100}%", bottom=-20, align_items="center")[text(str(i), font_size=12, font_weight="bold")] for i, line in enumerate(lines)],
     ]
 
-def status_cell(status: str):
-    text, icon = actions.user.ui_elements(["text", "icon"])
+def status_cell(status: str, graceperiod: bool = False):
+    div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
+
+    s = None
 
     if status == "detected":
-        return icon("check", size=16, color="73BF69", stroke_width=3)
+        s = icon("check", size=16, color="73BF69", stroke_width=3)
     if status == "throttled":
-        return text("!", color="C6053D", font_weight="bold")
+        s = icon("clock", size=16, color="FFCC00")
+        # return text("!", color="C6053D", font_weight="bold")
+    if s:
+        # if graceperiod:
+        #     return div(flex_direction="row", gap=4, align_items="center")[
+        #         text("~", color="C6053D", font_weight="bold"),
+        #         s,
+        #     ]
+        return s
     return text("-", color="999999")
 
 def power_ratio_bar(power: float, patterns: list):
@@ -1068,7 +1082,7 @@ def power_ratio_bar(power: float, patterns: list):
 
     colors = ["73BF69", "C6053D", "999999"]
 
-    return div(flex_direction="row", width=bar_width, background_color="73BF69", height=9)[
+    return div(flex_direction="row", width=bar_width, background_color="555555", height=9)[
         *[div(width=int(pattern["probability"] * bar_width), background_color=colors[i % len(colors)]) for i, pattern in enumerate(patterns)]
     ]
 
@@ -1109,7 +1123,11 @@ def table_test():
             th()[text("Noise", color=SECONDARY_COLOR)],
             th(align_items="flex_end")[text("Prob.", color=SECONDARY_COLOR)],
             th(align_items="center")[text("Status", color=SECONDARY_COLOR)],
-            th(align_items="center")[text("Power + Ratio", color=SECONDARY_COLOR)],
+            th(align_items="center")[div(flex_direction="row", gap=2)[
+                text("Power", color=SECONDARY_COLOR),
+                icon("multiply", size=11, stroke_width=3, color=SECONDARY_COLOR),
+                text("Prob. Ratio", color=SECONDARY_COLOR),
+            ]],
         ],
         *[
             tr()[
@@ -1123,9 +1141,9 @@ def table_test():
                     *[number(frame.format(p["probability"], 4)) for p in frame.patterns]
                 ]],
                 td(align_items="center")[div(gap=8, align_items="center")[
-                    *[status_cell(p['status']) for p in frame.patterns]
+                    *[status_cell(p['status'], p['graceperiod']) for p in frame.patterns]
                 ]],
-                td(align_items="flex_start")[power_ratio_bar(frame.power, frame.patterns)],
+                td(align_items="flex_start", justify_content="center")[power_ratio_bar(frame.power, frame.patterns)],
             ] for frame in frames
         ],
         # tr()[
@@ -1207,13 +1225,16 @@ def table_test():
 def key_val(key, val):
     div, text = actions.user.ui_elements(["div", "text"])
     return div(flex_direction="row", gap=8, justify_content="space_between")[
-        text(key, font_size=14, color=ACCENT_COLOR),
+        text(key, font_size=15, color=ACCENT_COLOR),
         number(val),
     ]
 
 def pattern(props):
     div, text, icon, button = actions.user.ui_elements(["div", "text", "icon", "button"])
     table, tr, td, style = actions.user.ui_elements(["table", "tr", "td", "style"])
+
+    pattern_data = get_pattern_json(props["name"])
+    print("pattern_data", pattern_data)
 
     style({
         "th": {
@@ -1228,7 +1249,14 @@ def pattern(props):
         },
     })
 
-    print("land pattern name", props["name"])
+#     2025-05-12 23:43:27.456    IO pattern_data {'sounds': ['t'], 'threshold': {'>power': 2, '>probability': 0.98}, 'throttle': {'t': 0.2, 'shush': 0.1, 'hiss': 0.1, 'guh': 0.1}}
+# 2025-05-12 23:43:27.456    IO land pattern name t
+# 2025-05-12 23:43:27.718    IO pattern_data {'sounds': ['tut'], 'threshold': {'>power': 10, '>probability': 0.9}, 'throttle': {'tut': 0.15, 'hiss': 0.15, 'shush': 0.15}}
+
+    throttles = pattern_data.get("throttle", {})
+    throttle_items = list(throttles.items())
+    throttle_groups = [throttle_items[i:i + 3] for i in range(0, len(throttle_items), 3)]
+    print("throttle_groups", throttle_groups)
 
     return div(id=f"pattern_{props['name']}", flex_direction="column", gap=12, min_width=150)[
         div(flex_direction="row", gap=8, align_items="center")[
@@ -1238,23 +1266,38 @@ def pattern(props):
         text("Threshold"),
         table()[
             tr()[
-                td()[key_val(">power", "6")],
-                td()[key_val(">probability", "0.99")],
+                td()[key_val(">power", pattern_data.get("threshold", {}).get(">power", "0"))],
+                td()[key_val(">probability", pattern_data.get("threshold", {}).get(">probability", "0"))],
             ],
         ],
         text("Throttle"),
         table()[
-            tr()[
-                td()[key_val("pop", "0.15")],
-                td()[key_val("ah", "0.1")],
-                td()[key_val("eh", "0.15")],
-            ],
-            tr()[
-                td()[key_val("oh", "0.1")],
-                td()[key_val("oo", "0.15")],
-                td()[key_val("guh", "0.15")],
-            ],
+            *[tr()[
+                *[td()[key_val(k, v)] for k, v in throttle],
+            ] for throttle in throttle_groups],
         ],
+    ]
+
+def active_patterns():
+    div, component, state = actions.user.ui_elements(["div", "component", "state"])
+    state = actions.user.ui_elements("state")
+
+    # capture_updating = state.get("capture_updating", False)
+    last_capture = state.get("last_capture", None)
+    frames = last_capture.detect_frames if last_capture else []
+    patterns_set = set()
+
+    for frame in frames:
+        for p in frame.patterns:
+            patterns_set.add(p["name"])
+
+    return div(gap=16)[
+        *[div(background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
+            component(pattern, props={
+                "name": pattern_name,
+                "color": "73BF69",
+            }),
+        ] for pattern_name in patterns_set],
     ]
 
 def noise_power_probability(props):
@@ -1311,12 +1354,7 @@ def page_detect_frames():
                 ] if capture_updating else None,
             ],
             div(flex_direction="row", gap=16)[
-                div(background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
-                    component(pattern, props={
-                        "name": "pop",
-                        "color": "73BF69",
-                    }),
-                ],
+                active_patterns(),
                 # div(background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
                 #     component(pattern, props={
                 #         "name": "guh",

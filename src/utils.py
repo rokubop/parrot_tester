@@ -66,7 +66,7 @@ def truncate_stringify(x: float, decimals: int = 3) -> str:
     return f"{truncated:.{decimals}f}"
 
 class ParrotTesterFrame:
-    THRESHOLD_PROBABILITY = 0.3
+    THRESHOLD_PROBABILITY = 0.1
 
     def __init__(self, frame: ParrotFrame):
         self.id = None
@@ -79,16 +79,19 @@ class ParrotTesterFrame:
         self.f1 = frame.f1
         self.f2 = frame.f2
         self.patterns = []
+        self.detected = False
 
-    def add_pattern(self, name: str, probability: float, detected: bool, throttled: bool):
+    def add_pattern(self, name: str, probability: float, detected: bool, throttled: bool, graceperiod: bool):
         if probability > self.THRESHOLD_PROBABILITY:
             self.patterns.append({
                 "name": name,
                 "probability": probability,
                 "status": "detected" if detected else "throttled" if throttled else "",
+                "graceperiod": graceperiod
             })
 
-    def freeze(self):
+    def freeze(self, detected: bool):
+        self.detected = detected
         self.patterns = sorted(self.patterns, key=lambda x: x["probability"], reverse=True)
 
     def format(self, value: float, decimals: int = 3) -> str:
@@ -406,10 +409,11 @@ def wrap_pattern_match(parrot_delegate):
             # )
             parrot_tester_frame.add_pattern(
                 name=pattern.name,
-                probability=frame.classes.get(pattern.name, 0),
+                probability=sum(frame.classes.get(label, 0) for label in pattern.labels),
                 detected=detect,
                 throttled=pattern.timestamps.throttled_at > 0 and \
                     pattern.timestamps.throttled_until > frame.ts,
+                graceperiod=pattern.timestamps.graceperiod_until > frame.ts,
             )
             if detect:
                 active.add(pattern.name)
@@ -417,7 +421,7 @@ def wrap_pattern_match(parrot_delegate):
                 parrot_delegate.throttle_patterns(throttles, frame.ts)
 
 
-        parrot_tester_frame.freeze()
+        parrot_tester_frame.freeze(detect)
         capture_collection.add(parrot_tester_frame, active)
 
         return active
@@ -485,11 +489,12 @@ def copy_patterns_to_generated(original_path: Path, generated_path: Path):
         with original_path.open("r", encoding="utf-8") as f:
             patterns = json.load(f)
 
-        for pattern in patterns.values():
-            for section in ("threshold", "grace_threshold"):
-                if section in pattern:
-                    if ">power" in pattern[section]:
-                        pattern[section][">power"] = 1
+        # set power to 1
+        # for pattern in patterns.values():
+        #     for section in ("threshold", "grace_threshold"):
+        #         if section in pattern:
+        #             if ">power" in pattern[section]:
+        #                 pattern[section][">power"] = 1
 
         with generated_path.open("w", encoding="utf-8") as f:
             json.dump(patterns, f, indent=2)
@@ -534,6 +539,13 @@ parrot(pop):
 
     target_file.write_text(code)
     print(f"✅ Wrote talon_noises.py to {target_file}")
+
+def get_pattern_json(name: str):
+    """Get the pattern JSON for a specific name."""
+    global patterns_json
+    if patterns_json is None:
+        raise ValueError("patterns_json is not initialized. Call parrot_tester_initialize() first.")
+    return patterns_json.get(name, {})
 
 def parrot_tester_initialize():
     """Test function to check if the paths are correct."""
