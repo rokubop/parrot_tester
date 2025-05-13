@@ -1049,6 +1049,29 @@ def graph_test():
         *[div(position="absolute", left=f"{line['time_fraction'] * 100}%", bottom=-20, align_items="center")[text(str(i), font_size=12, font_weight="bold")] for i, line in enumerate(lines)],
     ]
 
+def status_cell(status: str):
+    text, icon = actions.user.ui_elements(["text", "icon"])
+
+    if status == "detected":
+        return icon("check", size=16, color="73BF69", stroke_width=3)
+    if status == "throttled":
+        return text("!", color="C6053D", font_weight="bold")
+    return text("-", color="999999")
+
+def power_ratio_bar(power: float, patterns: list):
+    div, text = actions.user.ui_elements(["div", "text"])
+    # width = 100
+    # bar width = amount of power
+    # the bar is separated into colors for each pattern based on its probability
+    power_percent = min(30, power) / 30
+    bar_width = int(150 * power_percent)
+
+    colors = ["73BF69", "C6053D", "999999"]
+
+    return div(flex_direction="row", width=bar_width, background_color="73BF69", height=9)[
+        *[div(width=int(pattern["probability"] * bar_width), background_color=colors[i % len(colors)]) for i, pattern in enumerate(patterns)]
+    ]
+
 def table_test():
     div, text, icon, style = actions.user.ui_elements(["div", "text", "icon", "style"])
     table, th, tr, td = actions.user.ui_elements(["table", "th", "tr", "td"])
@@ -1086,6 +1109,7 @@ def table_test():
             th()[text("Noise", color=SECONDARY_COLOR)],
             th(align_items="flex_end")[text("Prob.", color=SECONDARY_COLOR)],
             th(align_items="center")[text("Status", color=SECONDARY_COLOR)],
+            th(align_items="center")[text("Power + Ratio", color=SECONDARY_COLOR)],
         ],
         *[
             tr()[
@@ -1099,8 +1123,9 @@ def table_test():
                     *[number(frame.format(p["probability"], 4)) for p in frame.patterns]
                 ]],
                 td(align_items="center")[div(gap=8, align_items="center")[
-                    *[text(f"{p['status']}", color="999999") for p in frame.patterns]
+                    *[status_cell(p['status']) for p in frame.patterns]
                 ]],
+                td(align_items="flex_start")[power_ratio_bar(frame.power, frame.patterns)],
             ] for frame in frames
         ],
         # tr()[
@@ -1249,6 +1274,7 @@ def noise_power_probability(props):
         "td": {
             "padding_left": 12,
             "padding_right": 12,
+            "padding_bottom": 10,
         },
     })
 
@@ -1279,7 +1305,7 @@ def page_detect_frames():
         div(flex_direction="column", gap=16)[
             div(position="relative", background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
                 component(noise_power_probability),
-                component(graph_test),
+                # component(graph_test),
                 div(position="absolute", top=0, right=0)[
                     text("Updating...", font_size=14, padding=2)
                 ] if capture_updating else None,

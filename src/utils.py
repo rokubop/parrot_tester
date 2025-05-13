@@ -127,6 +127,8 @@ class Buffer:
 
     def get(self, current_ts: float) -> list[ParrotTesterFrame]:
         all = self.buffer_last + self.buffer
+        # but dont include the last one
+        all = all[:-1]
         # look at each frame.ts and get the last 0.3 seconds
         return [frame for frame in all if current_ts - frame.ts < self.get_time_window]
 
@@ -390,37 +392,32 @@ def reset_capture_collection():
             #     print('parrot', f"predict {winner_label} {winner_prob * 100:.2f}% pow={frame.power:.2f} f0={frame.f0:.3f} f1={frame.f1:.3f} f2={frame.f2:.3f}")
 def wrap_pattern_match(parrot_delegate):
     def wrapper(frame: ParrotFrame):
-
         active: set[str] = set()
         parrot_tester_frame = ParrotTesterFrame(frame)
+        buffer.add(parrot_tester_frame)
 
         for pattern in parrot_delegate.patterns.values():
-
             detect = pattern.detect(frame)
-
-            print("adding pattern")
-            print(f"pattern.name {pattern.name}")
-            print(f"probability {frame.classes.get(pattern.name, 0)}")
-            print(f"detected {detect}")
-            print(f"throttled {pattern.timestamps.throttled_at > 0}")
+            # parrot_tester_frame.add_pattern(
+            #     name=pattern.name,
+            #     probability=frame.classes.get(pattern.name, 0),
+            #     detected=detect,
+            #     throttled=pattern.timestamps.throttled_at,
+            # )
             parrot_tester_frame.add_pattern(
                 name=pattern.name,
                 probability=frame.classes.get(pattern.name, 0),
                 detected=detect,
-                throttled=pattern.timestamps.throttled_at > 0,
+                throttled=pattern.timestamps.throttled_at > 0 and \
+                    pattern.timestamps.throttled_until > frame.ts,
             )
             if detect:
                 active.add(pattern.name)
-                # print(f"active {pattern.name} {frame.ts} {frame.power:.2f} f0={frame.f0:.3f} f1={frame.f1:.3f} f2={frame.f2:.3f}")
                 throttles = pattern.get_throttles()
-                # print(f"throttles {throttles}")
                 parrot_delegate.throttle_patterns(throttles, frame.ts)
 
-        print("freeze")
+
         parrot_tester_frame.freeze()
-        print("buffer")
-        buffer.add(parrot_tester_frame)
-        print("capture")
         capture_collection.add(parrot_tester_frame, active)
 
         return active

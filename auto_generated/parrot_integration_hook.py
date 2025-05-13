@@ -1,7 +1,7 @@
 # AUTO-GENERATED
 try:
     from talon import Module
-    from ....roku_parrot_model.parrot_integration import parrot_delegate
+    from ....roku.roku_parrot_model.parrot_integration import parrot_delegate
     from ..src.utils import (
         parrot_tester_wrap_parrot_integration,
         parrot_tester_restore_parrot_integration
