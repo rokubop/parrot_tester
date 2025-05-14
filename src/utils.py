@@ -6,6 +6,7 @@ from talon import actions, cron
 from talon.experimental.parrot import ParrotFrame
 from talon_init import TALON_USER
 from math import floor
+from .constants import get_color
 
 patterns_json = None
 
@@ -81,17 +82,20 @@ class ParrotTesterFrame:
         self.patterns = []
         self.detected = False
 
-    def add_pattern(self, name: str, probability: float, detected: bool, throttled: bool, graceperiod: bool):
+    def add_pattern(self, name: str, sounds: set[str], probability: float, detected: bool, throttled: bool, graceperiod: bool, color: str):
         if probability > self.THRESHOLD_PROBABILITY:
+            if detected:
+                self.detected = True
             self.patterns.append({
                 "name": name,
+                "sounds": sounds,
                 "probability": probability,
                 "status": "detected" if detected else "throttled" if throttled else "",
-                "graceperiod": graceperiod
+                "graceperiod": graceperiod,
+                "color": color
             })
 
-    def freeze(self, detected: bool):
-        self.detected = detected
+    def freeze(self):
         self.patterns = sorted(self.patterns, key=lambda x: x["probability"], reverse=True)
 
     def format(self, value: float, decimals: int = 3) -> str:
@@ -106,6 +110,14 @@ class ParrotTesterFrame:
     @property
     def winner_name(self):
         return self.winner.get("name", "")
+
+    @property
+    def winner_power_threshold(self):
+        name = self.winner_name
+        print("name", name)
+        x = patterns_json.get(name, {}).get("threshold", {}).get(">power", None)
+        print("power_threshold", x)
+        return x
 
     @property
     def winner_probability(self):
@@ -394,6 +406,10 @@ def reset_capture_collection():
             #     winner_label, winner_prob = next(iter(frame.classes.items()))
             #     print('parrot', f"predict {winner_label} {winner_prob * 100:.2f}% pow={frame.power:.2f} f0={frame.f0:.3f} f1={frame.f1:.3f} f2={frame.f2:.3f}")
 def wrap_pattern_match(parrot_delegate):
+    pattern_index = {
+        name: index for index, name in enumerate(parrot_delegate.patterns.keys())
+    }
+
     def wrapper(frame: ParrotFrame):
         active: set[str] = set()
         parrot_tester_frame = ParrotTesterFrame(frame)
@@ -409,11 +425,13 @@ def wrap_pattern_match(parrot_delegate):
             # )
             parrot_tester_frame.add_pattern(
                 name=pattern.name,
+                sounds=pattern.labels,
                 probability=sum(frame.classes.get(label, 0) for label in pattern.labels),
                 detected=detect,
                 throttled=pattern.timestamps.throttled_at > 0 and \
                     pattern.timestamps.throttled_until > frame.ts,
                 graceperiod=pattern.timestamps.graceperiod_until > frame.ts,
+                color=get_color(pattern_index[pattern.name]),
             )
             if detect:
                 active.add(pattern.name)
@@ -421,7 +439,7 @@ def wrap_pattern_match(parrot_delegate):
                 parrot_delegate.throttle_patterns(throttles, frame.ts)
 
 
-        parrot_tester_frame.freeze(detect)
+        parrot_tester_frame.freeze()
         capture_collection.add(parrot_tester_frame, active)
 
         return active
@@ -546,6 +564,10 @@ def get_pattern_json(name: str):
     if patterns_json is None:
         raise ValueError("patterns_json is not initialized. Call parrot_tester_initialize() first.")
     return patterns_json.get(name, {})
+
+def get_pattern_color(name: str):
+    index = list(patterns_json.keys()).index(name)
+    return get_color(index)
 
 def parrot_tester_initialize():
     """Test function to check if the paths are correct."""
