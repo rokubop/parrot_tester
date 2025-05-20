@@ -114,9 +114,9 @@ class ParrotTesterFrame:
     @property
     def winner_power_threshold(self):
         name = self.winner_name
-        print("name", name)
+        # print("name", name)
         x = patterns_json.get(name, {}).get("threshold", {}).get(">power", None)
-        print("power_threshold", x)
+        # print("power_threshold", x)
         return x
 
     @property
@@ -447,38 +447,54 @@ def wrap_pattern_match(parrot_delegate):
 
 original_pattern_match = None
 
-def parrot_tester_wrap_parrot_integration(parrot_delegate, file: str):
+def parrot_tester_wrap_parrot_integration(parrot_delegate):
     global original_pattern_match
     if original_pattern_match is None:
-        with open(file, "r", encoding="utf-8") as f:
-            print("Wrapping pattern_integration.py")
-            original_pattern_match = parrot_delegate.pattern_match
-            parrot_delegate.pattern_match = wrap_pattern_match(parrot_delegate)
-            parrot_delegate.set_patterns(json.load(f))
+        original_pattern_match = parrot_delegate.pattern_match
+        parrot_delegate.pattern_match = wrap_pattern_match(parrot_delegate)
 
-def parrot_tester_restore_parrot_integration(parrot_delegate, original_file: str):
-    """Restore pattern patterns."""
+# def parrot_tester_wrap_parrot_integration(parrot_delegate, file: str):
+#     global original_pattern_match
+#     if original_pattern_match is None:
+#         with open(file, "r", encoding="utf-8") as f:
+#             print("Wrapping pattern_integration.py")
+#             original_pattern_match = parrot_delegate.pattern_match
+#             parrot_delegate.pattern_match = wrap_pattern_match(parrot_delegate)
+#             parrot_delegate.set_patterns(json.load(f))
+
+def parrot_tester_restore_parrot_integration(parrot_delegate):
     global original_pattern_match
     if original_pattern_match is not None:
         parrot_delegate.pattern_match = original_pattern_match
         original_pattern_match = None
 
-    with open(original_file, "r", encoding="utf-8") as f:
-        parrot_delegate.set_patterns(json.load(f))
-        print("Restored pattern_integration.py")
-
     reset_capture_collection()
 
+# def parrot_tester_restore_parrot_integration(parrot_delegate, original_file: str):
+#     """Restore pattern patterns."""
+#     global original_pattern_match
+#     if original_pattern_match is not None:
+#         parrot_delegate.pattern_match = original_pattern_match
+#         original_pattern_match = None
+
+#     with open(original_file, "r", encoding="utf-8") as f:
+#         parrot_delegate.set_patterns(json.load(f))
+#         print("Restored pattern_integration.py")
+
+#     reset_capture_collection()
+
 def generate_parrot_integration_hook(import_path: str, current_file: Path):
-    target_dir = current_file.parent.parent / "auto_generated"
+    target_dir = current_file.parent.parent
     test_file = target_dir / "parrot_integration_hook.py"
 
     code = f"""\
-# AUTO-GENERATED
+# AUTO-GENERATED: Do not edit manually.
+# This provides Talon access to parrot_delegate via actions,
+# while preserving the integrity of the original source.
 try:
     from talon import Module
     from {import_path} import parrot_delegate
-    from ..src.utils import (
+    from .src.core import (
         parrot_tester_wrap_parrot_integration,
         parrot_tester_restore_parrot_integration
     )
@@ -487,13 +503,13 @@ try:
 
     @mod.action_class
     class Actions:
-        def parrot_tester_wrap_parrot_integration(file: str):
+        def parrot_tester_wrap_parrot_integration():
             \"\"\"Wrap parrot_integration file\"\"\"
-            parrot_tester_wrap_parrot_integration(parrot_delegate, file)
+            parrot_tester_wrap_parrot_integration(parrot_delegate)
 
-        def parrot_tester_restore_parrot_integration(original_file: str):
+        def parrot_tester_restore_parrot_integration():
             \"\"\"Restore parrot_integration file\"\"\"
-            parrot_tester_restore_parrot_integration(parrot_delegate, original_file)
+            parrot_tester_restore_parrot_integration(parrot_delegate)
 except ImportError:
     pass
 """
@@ -501,27 +517,27 @@ except ImportError:
     test_file.write_text(code)
     print(f"✅ Wrote test file to {test_file}")
 
-def copy_patterns_to_generated(original_path: Path, generated_path: Path):
-    generated_path = generated_path / "patterns_draft.json"
-    try:
-        with original_path.open("r", encoding="utf-8") as f:
-            patterns = json.load(f)
+# def copy_patterns_to_generated(original_path: Path, generated_path: Path):
+#     generated_path = generated_path / "patterns_draft.json"
+#     try:
+#         with original_path.open("r", encoding="utf-8") as f:
+#             patterns = json.load(f)
 
-        # set power to 1
-        # for pattern in patterns.values():
-        #     for section in ("threshold", "grace_threshold"):
-        #         if section in pattern:
-        #             if ">power" in pattern[section]:
-        #                 pattern[section][">power"] = 1
+#         # set power to 1
+#         # for pattern in patterns.values():
+#         #     for section in ("threshold", "grace_threshold"):
+#         #         if section in pattern:
+#         #             if ">power" in pattern[section]:
+#         #                 pattern[section][">power"] = 1
 
-        with generated_path.open("w", encoding="utf-8") as f:
-            json.dump(patterns, f, indent=2)
+#         with generated_path.open("w", encoding="utf-8") as f:
+#             json.dump(patterns, f, indent=2)
 
-        print(f"✅ Copied patterns.json to: {generated_path}")
-        return patterns
-    except Exception as e:
-        print(f"❌ Failed to copy patterns.json: {e}")
-        return {}
+#         print(f"✅ Copied patterns.json to: {generated_path}")
+#         return patterns
+#     except Exception as e:
+#         print(f"❌ Failed to copy patterns.json: {e}")
+#         return {}
 
 def create_auto_generated_folder(generated_folder: Path):
     """Create the auto_generated folder if it doesn't exist."""
@@ -531,39 +547,14 @@ def create_auto_generated_folder(generated_folder: Path):
     except Exception as e:
         print(f"❌ Failed to create auto_generated folder: {e}")
 
-def generate_talon_noises_file(patterns: dict, generated_folder: Path):
-    """Generate the talon_noises.py file based on the patterns."""
-    target_file = generated_folder / "parrot_tester_active.talon"
-    code = f"""# AUTO-GENERATED
-tag: user.parrot_tester
-not mode: sleep
--
-<phrase>: skip()
-parrot(pop):
-    user.parrot_tester_discrete("pop", power, f0, f1, f2)
-    mouse_click()
-"""
-    for name, config in patterns.items():
-        if name == "pop":
-            continue
-
-        is_continuous = config.get("graceperiod", False)
-
-        if is_continuous:
-            code += f"parrot({name}): user.parrot_tester_continuous_start(\"{name}\", power, f0, f1, f2)\n"
-            code += f"parrot({name}:stop): user.parrot_tester_continuous_stop(\"{name}\")\n"
-        else:
-            code += f"parrot({name}): user.parrot_tester_discrete(\"{name}\", power, f0, f1, f2)\n"
-
-    target_file.write_text(code)
-    print(f"✅ Wrote talon_noises.py to {target_file}")
-
-def get_pattern_json(name: str):
+def get_pattern_json(name: str = None):
     """Get the pattern JSON for a specific name."""
     global patterns_json
     if patterns_json is None:
         raise ValueError("patterns_json is not initialized. Call parrot_tester_initialize() first.")
-    return patterns_json.get(name, {})
+    if name is not None:
+        return patterns_json.get(name, {})
+    return patterns_json
 
 def get_pattern_color(name: str):
     index = list(patterns_json.keys()).index(name)
@@ -575,9 +566,8 @@ def parrot_tester_initialize():
     parrot_integration_path = get_parrot_integration_path().resolve()
     patterns_py_path = get_patterns_py_path().resolve()
     current_path = Path(__file__).resolve()
-    generated_folder = Path(current_path.parent.parent / "auto_generated").resolve()
 
-    current = Path(__file__).resolve()
+    current = Path(__file__).parent.resolve()
     target = Path(parrot_integration_path).resolve()
     user_root = Path(TALON_USER).resolve()
 
@@ -586,27 +576,17 @@ def parrot_tester_initialize():
 
     patterns_json = load_patterns(patterns_py_path)
 
-    # Example:
-    # for name, config in patterns.items():
-    #     print(f"{name}: {config}")
-
     print("TALON_USER:", TALON_USER)
     print("current_path:", current_path)
     print("parrot_integration_path:", parrot_integration_path)
     import_path = build_relative_import_path(current_rel, target_rel)
     print(import_path)
-    create_auto_generated_folder(generated_folder)
-    copy_patterns_to_generated(patterns_py_path, generated_folder)
-    generate_talon_noises_file(patterns_json, generated_folder)
     generate_parrot_integration_hook(import_path, current_path)
-    patterns_draft = Path(generated_folder / "patterns_draft.json").resolve()
-    print(f"patterns_draft: {patterns_draft}")
-    actions.user.parrot_tester_wrap_parrot_integration(patterns_draft)
+    actions.user.parrot_tester_wrap_parrot_integration()
 
     print(f"Parrot Integration Path: {parrot_integration_path}")
     print(f"Patterns.py Path: {patterns_py_path}")
 
 def restore_patterns():
     """Restore the original patterns.json file."""
-    original_path = get_patterns_py_path().resolve()
-    actions.user.parrot_tester_restore_parrot_integration(original_path)
+    actions.user.parrot_tester_restore_parrot_integration()

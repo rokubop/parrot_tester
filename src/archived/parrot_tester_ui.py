@@ -5,7 +5,7 @@ import re
 import random
 import math
 import time
-from .utils import (
+from .core import (
     parrot_tester_initialize,
     restore_patterns,
     get_pattern_json,
@@ -19,18 +19,6 @@ data = {}
 start_time = 0
 cron_job = None
 duration = 10.0
-
-def on_noise(noise, power, f0, f1, f2):
-    actions.user.ui_elements_set_state("log", lambda log: log + [{
-        "time": time.perf_counter() - start_time,
-        "time_display": f"{(time.perf_counter() - start_time):.3f}",
-        "noise": noise,
-        "power": power,
-        "power_display": f"{power:.2f}" if power else '',
-        "f0": str(round(f0)) if f0 is not None else '',
-        "f1": str(round(f1)) if f1 is not None else '',
-        "f2": str(round(f2)) if f2 is not None else '',
-    }])
 
 def set_data(noise, power, f0, f1, f2):
     global data
@@ -167,37 +155,6 @@ def noise_data_ui(noise):
         ],
     ]
 
-def column(noises):
-    div = actions.user.ui_elements("div")
-
-    return div(flex_direction="column")[
-        *[noise_data_ui(noise) for noise in noises]
-    ]
-
-def parrot_tester_ui(props):
-    div, text, screen, icon, button = actions.user.ui_elements(["div", "text", "screen", "icon", "button"])
-
-    return screen(justify_content="center", align_items="center")[
-        div(draggable=True, background_color="191B1F", border_radius=8, border_width=1)[
-            div(flex_direction='row', justify_content="space_between", border_bottom=1, border_color="555555")[
-                text("Parrot Tester", font_size=24, padding=16),
-                div(flex_direction="row", gap=16)[
-                    button(border_radius=4, on_click=copy_all_data_to_clipboard, align_items="center", flex_direction="row", gap=8)[
-                        text("Copy all"),
-                        icon("copy")
-                    ],
-                    button(on_click=parrot_tester_disable)[
-                        icon("close", size=20, padding=6)
-                    ]
-                ]
-            ],
-            div(flex_direction="row", padding=16)[
-                *[column(noises) for noises in props["noise_columns"]]
-            ]
-        ]
-    ]
-
-# noises = ["ah", "oh", "ee", "guh", "eh", "er", "t", "mm", "palate", "pop", "tut", "sh", "ss", "cluck"]
 
 def rect_color(color, size=20, **props):
     div = actions.user.ui_elements("div")
@@ -239,7 +196,7 @@ def noise_item(noise):
     div, text, icon, button = actions.user.ui_elements(["div", "text", "icon", "button"])
     svg, rect = actions.user.ui_elements_svg(["svg", "rect"])
 
-    return button(flex_direction="row", padding=8, border_width=1, gap=8, border_color="333333", align_items="center")[
+    return button(flex_direction="row", padding=8, border_width=1, gap=8, border_color=BORDER_COLOR, align_items="center")[
         icon("chevron_right", size=20),
         icon("check", size=20),
         # random color 6 digit hex
@@ -257,238 +214,13 @@ def cell(children):
         children
     ]
 
-def color_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("")),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-        cell(rect_color(random_hex_color())),
-    ]
-
-def noise_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("Noise")),
-        cell(text("pop")),
-        cell(text("pop")),
-        cell(text("palate")),
-        cell(text("pop")),
-        cell(text("pop")),
-        cell(text("palate")),
-        cell(text("pop")),
-        cell(text("pop")),
-        cell(text("palate")),
-        cell(text("pop")),
-        cell(text("pop")),
-        cell(text("palate")),
-        cell(text("pop")),
-        cell(text("pop")),
-        cell(text("palate")),
-    ]
-
-def power_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("Power")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-    ]
-
-def delta_power_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("Power")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-        cell(text("20")),
-        cell(text("14")),
-        cell(text("12")),
-    ]
-
-def time_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("Time")),
-        cell(text("0.234")),
-        cell(div(flex_direction="row")[text("1.494"),text(" +1.260", color="73BF69")]),
-        cell(text("2.234")),
-        cell(text("3.236")),
-        cell(text("3.494")),
-        cell(text("4.234")),
-        cell(text("5.234")),
-        cell(text("6.294")),
-        cell(text("6.434")),
-        cell(text("7.234")),
-        cell(text("7.494")),
-        cell(text("8.234")),
-        cell(text("9.234")),
-        cell(text("9.494")),
-        cell(text("9.923")),
-    ]
-
-def time_delta_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("Time")),
-        cell(text("0.000")),
-        cell(text("1.260")),
-        cell(text("0.740")),
-        cell(text("0.000")),
-        cell(text("1.260")),
-        cell(text("0.740")),
-        cell(text("0.000")),
-        cell(text("1.260")),
-        cell(text("0.740")),
-        cell(text("0.000")),
-        cell(text("1.260")),
-        cell(text("0.740")),
-        cell(text("0.000")),
-        cell(text("1.260")),
-        cell(text("0.740")),
-    ]
-
-def count_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("Count")),
-        cell(text("1")),
-        cell(text("1")),
-        cell(text("2")),
-        cell(text("1")),
-        cell(text("3")),
-        cell(text("4")),
-        cell(text("5")),
-        cell(text("6")),
-        cell(text("7")),
-        cell(text("2")),
-        cell(text("8")),
-        cell(text("9")),
-        cell(text("10")),
-        cell(text("11")),
-        cell(text("12")),
-    ]
-
-def f0_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("F0")),
-        cell(text("3333")),
-        cell(text("3453")),
-        cell(text("5444")),
-        cell(text("3333")),
-        cell(text("3453")),
-        cell(text("5444")),
-        cell(text("3333")),
-        cell(text("3453")),
-        cell(text("5444")),
-        cell(text("3333")),
-        cell(text("3453")),
-        cell(text("5444")),
-        cell(text("3333")),
-        cell(text("3453")),
-        cell(text("5444")),
-    ]
-
-def f1_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("F1")),
-        cell(text("6663")),
-        cell(text("6432")),
-        cell(text("8494")),
-        cell(text("6663")),
-        cell(text("6432")),
-        cell(text("8494")),
-        cell(text("6663")),
-        cell(text("6432")),
-        cell(text("8494")),
-        cell(text("6663")),
-        cell(text("6432")),
-        cell(text("8494")),
-        cell(text("6663")),
-        cell(text("6432")),
-        cell(text("8494")),
-    ]
-
-def f2_col():
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="column")[
-        cell(text("F2")),
-        cell(text("9388")),
-        cell(text("8499")),
-        cell(text("9003")),
-        cell(text("9388")),
-        cell(text("8499")),
-        cell(text("9003")),
-        cell(text("9388")),
-        cell(text("8499")),
-        cell(text("9003")),
-        cell(text("9388")),
-        cell(text("8499")),
-        cell(text("9003")),
-        cell(text("9388")),
-        cell(text("8499")),
-        cell(text("9003")),
-    ]
-
-def row(item, color):
-    div, text = actions.user.ui_elements(["div", "text"])
-    return div(flex_direction="row", gap=16)[
-        text(f"{item['time_display']}", width=50),
-        div(flex_direction="row", gap=8, width=100)[
-            rect_color(color),
-            text(item["noise"]),
-        ],
-        # text(item["noise"]),
-        text(item["power_display"]),
-        # text(f"{float(item["f0"]):.2f}" if item else '', width=100),
-        # text(f"{float(item["f1"]):.2f}" if item else '', width=100),
-        # text(f"{float(item["f2"]):.2f}" if item else '', width=100),
-    ]
-
 def log():
     div, text, state = actions.user.ui_elements(["div", "text", "state"])
 
     log = state.get("log")
     noises = state.get("noises")
 
-    return div(id="log", flex_direction="column", height=500, overflow_y="scroll", border_width=1, background_color="191B1F")[
+    return div(id="log", flex_direction="column", min_height=500, overflow_y="scroll", max_height=800, border_width=1, background_color="191B1F")[
         # text('hello'),
         *[row(item, noises[item["noise"]]["color"]) for item in log],
         # time_col(),
@@ -508,14 +240,14 @@ def log():
 
 
 
-def Timeline():
-    div, state, effect = actions.user.ui_elements(["div", "state", "effect"])
+# def Timeline():
+#     div, state, effect = actions.user.ui_elements(["div", "state", "effect"])
 
-    effect(init_graph, [])
+#     effect(init_graph, [])
 
-    return div(id="timeline", position="relative", width="100%", min_width=900, height=150, background_color="191B1F", border_width=1)[
-     *[div(position="absolute", width=1, height="100%", background_color="333333", left=f"{i * 10}%") for i in range(11)],
-    ]
+#     return div(id="timeline", position="relative", width="100%", min_width=900, height=150, background_color="191B1F", border_width=1)[
+#      *[div(position="absolute", width=1, height="100%", background_color="333333", left=f"{i * 10}%") for i in range(11)],
+#     ]
 
 def cron_timer_enable():
     global cron_job, start_time
@@ -605,21 +337,21 @@ def sidebar():
 
     noises = state.get("noises")
 
-    return div(flex_direction='column', padding=16, border_right=1, border_color="555555")[
+    return div(flex_direction='column', padding=16, border_right=1, border_color=BORDER_COLOR)[
         text("Parrot Tester", font_size=24, margin_bottom=24),
         *[noise_item(noise) for noise in noises]
     ]
 
 def filter_dropdown_button(title: str):
     text, icon, button = actions.user.ui_elements(["text", "icon", "button"])
-    return button(flex_direction="row", align_items="center", gap=8, border_radius=4, border_color="333333", border_width=1, padding=8, padding_left=16, padding_right=16)[
+    return button(flex_direction="row", align_items="center", gap=8, border_radius=4, border_color=BORDER_COLOR, border_width=1, padding=8, padding_left=16, padding_right=16)[
         text(title),
         icon("chevron_down", size=16),
     ]
 
 def styled_button(title: str, on_click=lambda e: None):
     button = actions.user.ui_elements(["button"])
-    return button(text=title, on_click=on_click, border_radius=4, border_color="333333", border_width=1, padding=12, padding_left=16, padding_right=16)
+    return button(text=title, on_click=on_click, border_radius=4, border_color=BORDER_COLOR, border_width=1, padding=12, padding_left=16, padding_right=16)
 
 def filters():
     div, text = actions.user.ui_elements(["div", "text"])
@@ -718,7 +450,7 @@ def tabs():
             on_click=lambda e: set_tab(name),
             padding=8,
             border_radius=4,
-            border_color="333333",
+            border_color=BORDER_COLOR,
             border_width=1,
             background_color="191B1F" if tab == name else "212141",
             flex_direction="row",
@@ -730,7 +462,7 @@ def tabs():
     return div(flex_direction='row', justify_content="space_between")[
         tab_button("activity"),
         tab_button("log"),
-        tab_button("timeline"),
+        # tab_button("timeline"),
         tab_button("stats"),
         tab_button("patterns"),
     ]
@@ -850,23 +582,6 @@ def listen():
 def stop_listen():
     ctx.tags = []
 
-def parrot_tester_discrete(noise: str, power: float = None, f0: float = None, f1: float = None, f2: float = None):
-    """Trigger parrot tester discrete"""
-    # print("trigger pattern name", noise)
-    actions.user.ui_elements_highlight_briefly(f"pattern_{noise}")
-    on_noise(noise, power, f0, f1, f2)
-
-def parrot_tester_continuous_start(noise: str, power: float = None, f0: float = None, f1: float = None, f2: float = None):
-    """Trigger parrot tester continuous"""
-    actions.user.ui_elements_highlight(f"pattern_{noise}")
-    on_noise(noise, power, f0, f1, f2)
-    # set_data(noise, power, f0, f1, f2)
-
-def parrot_tester_continuous_stop(noise: str):
-    """Stop parrot tester continuous"""
-    on_noise(noise, None, None, None, None)
-    actions.user.ui_elements_unhighlight(f"pattern_{noise}")
-
 def parrot_tester_disable():
     global start_time
     print("Disabling parrot tester")
@@ -886,15 +601,13 @@ def parrot_tester_toggle():
         parrot_tester_disable()
     else:
         parrot_tester_initialize()
-        actions.user.ui_elements_show(parrot_tester_new_ui, initial_state={
-            "noises": init_parrot_noises_state(),
-            "log": [],
-        })
+        actions.user.ui_elements_show(parrot_tester_new_ui)
 
 HEADER_TEXT = "Parrot Tester"
 DOCS_BUTTON_TEXT = "parrot.py documentation"
 PATTERNS_BUTTON_TEXT = "patterns.json"
-TABS = ["Detect frames", "Log", "Timeline", "Stats", "Patterns", "About"]
+# TABS = ["Frames", "Log", "Silence", "Stats", "Patterns", "Export", "About"]
+TABS = ["Frames", "About"]
 CHART_DATA = [10, 20, 30, 40, 50, 40, 30, 20]
 DETAILS_TEXT = [f"pop {i*10}, gu4 {i*5}" for i in range(1, 9)]
 GREEN = "3D7D3D"
@@ -926,24 +639,39 @@ def legend():
     div, text, icon, style = actions.user.ui_elements(["div", "text", "icon", "style"])
     table, th, tr, td = actions.user.ui_elements(["table", "th", "tr", "td"])
 
-    style({
-        "table":{
-            # "border_width": 1,
-            # "background_color": "222222",
-        },
-        "th": {
-            "padding": 8,
-            "padding_left": 10,
-            "padding_right": 10,
-            "align_items": "flex_start",
-        },
-        "td": {
-            "padding": 8,
-            "padding_left": 10,
-            "padding_right": 10,
-            "align_items": "flex_start",
-        },
-    })
+    # style({
+    #     "table":{
+    #         # "border_width": 1,
+    #         # "background_color": "222222",
+    #     },
+    #     "th": {
+    #         "padding": 8,
+    #         "padding_left": 10,
+    #         "padding_right": 10,
+    #         "align_items": "flex_start",
+    #     },
+    #     "td": {
+    #         "padding": 8,
+    #         "padding_left": 10,
+    #         "padding_right": 10,
+    #         "align_items": "flex_start",
+    #     },
+    # })
+
+    return div(flex_direction="row", gap=32, align_items="flex_end")[
+        div(flex_direction="row", gap=8, align_items="center")[
+            text("Detected"),
+            icon("check", size=14, color="73BF69", stroke_width=3),
+        ],
+        div(flex_direction="row", gap=8, align_items="center")[
+            text("Throttle"),
+            icon("clock", size=14, color="FFCC00"),
+        ],
+        div(flex_direction="row", gap=8, align_items="center")[
+            text("Not detected"),
+            text("-", color="999999"),
+        ],
+    ]
 
     return table()[
         tr()[
@@ -1005,10 +733,11 @@ def legend():
 ACTIVE_COLOR = "3B71D9"
 ACCENT_COLOR = "67A4FF"
 SECONDARY_COLOR = "CCCCCC"
-BORDER_COLOR = "2F3137"
+WINDOW_BORDER_COLOR = "#2F3137"
+BORDER_COLOR = "#000000"
 
-def number(value):
-    text = actions.user.ui_elements("text")
+def number(value, **kwargs):
+    text = actions.user.ui_elements("text", **kwargs)
     return text(value, font_family="consolas")
 
 def graph_test():
@@ -1080,11 +809,11 @@ def power_ratio_bar(power: float, patterns: list, power_threshold: float = None)
     full_bar_width = 150
     bar_width = int(full_bar_width * power_percent)
     power_threshold_left = int(power_threshold_percent * full_bar_width) if power_threshold else None
-    print("power_threshold_left", power_threshold_left)
+    # print("power_threshold_left", power_threshold_left)
 
     return div(position="relative", flex_direction="row", width=bar_width, background_color="555555", height=9)[
         *[div(width=int(pattern["probability"] * bar_width), background_color=pattern["color"]) for pattern in patterns],
-        # div(position="absolute", left=power_threshold_left - 1.5, width=1.5, top=0, bottom=0, background_color="191B1FCC") if power_threshold else None,
+        div(position="absolute", left=power_threshold_left - 1.5, width=1.5, top=0, bottom=0, background_color="191B1FCC") if power_threshold else None,
         # div(position="absolute", left=power_threshold_left - 7, top=0, bottom=0)[
         #     icon("diamond", size=9, color="191B1F", fill="191B1F" stroke_width=3)
         # ] if power_threshold else None,
@@ -1116,7 +845,7 @@ def table_test():
         },
     })
 
-    return table()[
+    return table(height="100%", overflow_y="scroll", padding=16, padding_top=0)[
         tr()[
             th(align_items="flex_end")[text("Frame", color=SECONDARY_COLOR)],
             th(align_items="flex_end")[div(flex_direction="row", gap=2, align_items="center")[
@@ -1138,7 +867,7 @@ def table_test():
             tr()[
                 td()[number(str(frame.id))],
                 td()[number(frame.format(frame.ts_delta, 3))],
-                td(align_items="flex_start")[div(gap=8)[
+                td(align_items="flex_start")[div(gap=8, min_width=60)[
                     *[text(p["name"]) for p in frame.patterns]
                 ]],
                 # td(align_items="flex_start")[div(gap=8)[
@@ -1252,64 +981,116 @@ def pattern(props):
 
     style({
         "th": {
-            "padding": 10,
-            "padding_left": 0,
-            "padding_right": 12,
+            "padding": 5,
+            "padding_right": 7,
+            "flex_direction": "row",
+            "align_items": "center",
+            # "padding_left": 0,
+            # "padding_right": 12,
         },
         "td": {
-            "padding": 8,
-            "padding_left": 0,
-            "padding_right": 12,
+            "padding": 5,
+            "padding_right": 7,
+            "flex_direction": "row",
+            "align_items": "center",
+            # "padding_left": 0,
+            # "padding_right": 12,
         },
     })
 
     throttles = pattern_data.get("throttle", {})
     throttle_items = list(throttles.items())
-    throttle_groups = [throttle_items[i:i + 3] for i in range(0, len(throttle_items), 3)]
+    throttle_groups = [throttle_items[i:i + 2] for i in range(0, len(throttle_items), 2)]
 
-    return div(id=f"pattern_{props['name']}", flex_direction="column", gap=8, min_width=150)[
-        div(flex_direction="row", gap=8, align_items="center")[
-            rect_color(pattern_color, size=16),
-            text(props["name"], font_size=20, padding_bottom=8),
+    return div(id=f"pattern_{props['name']}", padding=16, flex_direction="column", gap=8, width=300, border_bottom=1, border_color=BORDER_COLOR)[
+        div(flex_direction="row", gap=8, align_items="center", padding_bottom=8)[
+            rect_color(pattern_color, size=14),
+            text(props["name"], font_size=20),
         ],
-        div(flex_direction="row", margin=12)[
-            key_val("Sounds", ", ".join(pattern_data.get("sounds", []))),
+        div(justify_content="center", align_items="center")[
+            div()[
+                div(flex_direction="row", gap=8, margin_left=15, align_items="center")[
+                    text("sounds", font_size=14, color=ACCENT_COLOR),
+                    text(",".join(pattern_data.get("sounds", [])), font_size=14),
+                ],
+                table(padding=8, padding_bottom=0)[
+                    tr()[
+                        td(position="relative")[
+                            text(">power", font_size=14, color=ACCENT_COLOR),
+                            # text("sounds", font_size=14, color=ACCENT_COLOR, position="absolute", right=10, top=-20),
+                        ],
+                        td(margin_right=16, position="relative")[
+                            number(pattern_data.get("threshold", {}).get(">power", "0")),
+                            # text(",".join(pattern_data.get("sounds", "")), {"position": "absolute", "left": 2, "top": -25, "width": 200}),
+                        ],
+                        td()[text(">probability", font_size=14, color=ACCENT_COLOR)],
+                        td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"))],
+                    ],
+                    *[
+                        tr()[
+                            *[
+                                item
+                                for k, v in group
+                                for item in [
+                                    td()[
+                                        div(flex_direction="row", gap=4, align_items="center")[
+                                            icon("clock", size=14, color="FFCC00"),
+                                            text(k, font_size=14, color=ACCENT_COLOR),
+                                        ]
+                                    ],
+                                    td(margin_right=16)[number(v)],
+                                ]
+                            ]
+                        ]
+                        for group in throttle_groups
+                    ]
+                ],
+            ]
         ],
-        text("Threshold", margin_top=12),
-        table()[
-            tr()[
-                td()[key_val(">power", pattern_data.get("threshold", {}).get(">power", "0"))],
-                td()[key_val(">probability", pattern_data.get("threshold", {}).get(">probability", "0"))],
-            ],
-        ],
-        text("Throttle", margin_top=12),
-        table()[
-            *[tr()[
-                *[td()[key_val(k, v)] for k, v in throttle],
-            ] for throttle in throttle_groups],
-        ],
+        # div(flex_direction="row", margin=12)[
+        #     key_val("Sounds", ", ".join(pattern_data.get("sounds", []))),
+        # ],
+        # # text("Threshold", margin_top=12),
+        # table()[
+        #     tr()[
+        #         td()[key_val(">power", pattern_data.get("threshold", {}).get(">power", "0"))],
+        #         td()[key_val(">probability", pattern_data.get("threshold", {}).get(">probability", "0"))],
+        #     ],
+        # ],
+        # # text("Throttle", margin_top=12),
+        # table()[
+        #     *[tr()[
+        #         *[td()[key_val(k, v)] for k, v in throttle],
+        #     ] for throttle in throttle_groups],
+        # ],
     ]
 
-def active_patterns():
-    div, component, state = actions.user.ui_elements(["div", "component", "state"])
+def detected_patterns():
+    div, component, state, text = actions.user.ui_elements(["div", "component", "state", "text"])
     state = actions.user.ui_elements("state")
 
     # capture_updating = state.get("capture_updating", False)
     last_capture = state.get("last_capture", None)
     frames = last_capture.detect_frames if last_capture else []
-    patterns_set = set()
+    patterns = []
+    seen = set()
 
     for frame in frames:
         for p in frame.patterns:
-            patterns_set.add(p["name"])
+            name = p["name"]
+            if name not in seen:
+                patterns.append(name)
+                seen.add(name)
 
-    return div(gap=16)[
-        *[div(background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
-            component(pattern, props={
-                "name": pattern_name,
-                "color": "73BF69",
-            }),
-        ] for pattern_name in patterns_set],
+    return div(height="100%")[
+        text("Detected patterns", padding=16,font_size=20, border_bottom=1, border_color=BORDER_COLOR),
+        div(flex_direction="column", overflow_y="scroll", height="100%", width=300)[
+            *[div()[
+                component(pattern, props={
+                    "name": pattern_name
+                })
+            ] for pattern_name in patterns]
+        ],
     ]
 
 def noise_power_probability(props):
@@ -1354,74 +1135,231 @@ def table_controls():
     div, text, icon, button = actions.user.ui_elements(["div", "text", "icon", "button"])
     state = actions.user.ui_elements("state")
 
-    return div(flex_direction="row", gap=16, justify_content="flex_end", margin_bottom=8)[
-        button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
-            text("Capture time"),
-            icon("chevron_down", size=14),
-        ],
-        button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
-            text("Filters"),
-            icon("chevron_down", size=14),
-        ],
-        button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
+    return div(flex_direction="row", gap=16)[
+        # button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
+        #     text("Capture time"),
+        #     icon("chevron_down", size=14),
+        # ],
+        # button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
+        #     text("Filters"),
+        #     icon("chevron_down", size=14),
+        # ],
+        button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, background_color="#292A2F", border_color=BORDER_COLOR, border_width=1, border_radius=4)[
             text("Columns"),
             icon("chevron_down", size=14),
         ],
     ]
 
+def pattern_pill(name):
+    div, text = actions.user.ui_elements(["div", "text"])
+
+    pattern_color = get_pattern_color(name)
+    return div(border_width=1, border_color=pattern_color, background_color=f"{pattern_color}33", padding=4, border_radius=4)[
+        text(f"+ {name}", font_size=14)
+    ]
+
+def thunder_svg():
+    svg, path = actions.user.ui_elements_svg(["svg", "path"])
+
+    return svg(size=16, color="FFCC00")[
+        path(d="M7 2v11h3v9l7-12h-4l4-8h-10z")
+    ]
+
+def textbox(text_str, props={}):
+    div, text = actions.user.ui_elements(["div", "text"])
+
+    return div(
+        background_color="111111",
+        flex_direction="row",
+        align_items="center",
+        padding=5,
+        min_width=60,
+        border_radius=2,
+        border_width=1,
+        border_color="000000",
+        **props,
+    )[
+        text(text_str, font_size=14, color=SECONDARY_COLOR),
+    ]
+
+def override_pattern(props):
+    div, text, icon, style, switch, state = actions.user.ui_elements(["div", "text", "icon", "style", "switch", "state"])
+    table, tr, th, td = actions.user.ui_elements(["table", "tr", "th", "td"])
+
+    is_open, set_is_open = state.use_local("is_open", False)
+    pattern = get_pattern_json(props["name"])
+    color = get_pattern_color(props["name"])
+
+    style({
+        "td": {
+            "padding": 3,
+            "padding_right": 10,
+            "flex_direction": "row",
+            "align_items": "center",
+        },
+    })
+
+    throttles = pattern.get("throttle", {})
+    throttle_items = list(throttles.items())
+    throttle_groups = [throttle_items[i:i + 2] for i in range(0, len(throttle_items), 2)]
+
+    return div()[
+        div(
+            flex_direction="row",
+            justify_content="space_between",
+            border_bottom=0 if is_open else 1,
+            border_color=BORDER_COLOR,
+            align_items="center",
+            gap=16
+        )[
+            switch(checked=False, size=16, margin_left=12, on_change=lambda e: set_is_open(e.checked)),
+            div(position="relative", flex_direction="row", justify_content="space_between", flex=1)[
+                div(flex_direction="row", gap=8, align_items="center")[
+                    rect_color(color, size=16),
+                    text(props["name"], for_id="pattern_" + props["name"], padding=8, flex=1),
+                ],
+                div(flex_direction="row", align_items="center")[
+                    icon("copy", size=20, color="999999", padding=8),
+                    icon("rotate_left", size=16, color="999999", padding=8),
+                ],
+                # slightly muted if disabled
+                div(position="absolute", width="100%", height="100%", background_color="292A2F88") if not is_open else None,
+            ],
+        ],
+        div(justify_content="center", align_items="center")[
+            table(padding=8, margin_top=24)[
+                tr()[
+                    td(justify_content="flex_end", position="relative")[
+                        text(">power", font_size=14),
+                        text("sounds", font_size=14, position="absolute", right=10, top=-20),
+                    ],
+                    td(margin_right=16, position="relative")[
+                        textbox(pattern.get("threshold", {}).get(">power", "0")),
+                        textbox(",".join(pattern.get("sounds", "")), {"position": "absolute", "left": 2, "top": -25, "width": 200}),
+                    ],
+                    td(justify_content="flex_end")[text(">probability", font_size=14)],
+                    td(margin_right=16)[textbox(pattern.get("threshold", {}).get(">probability", "0"))],
+                ],
+                *[
+                    tr()[
+                        *[
+                            item
+                            for k, v in group
+                            for item in [
+                                td(justify_content="flex_end")[
+                                    div(flex_direction="row", gap=4, align_items="center")[
+                                        icon("clock", size=14, color="FFCC00"),
+                                        text(k, font_size=14),
+                                    ]
+                                ],
+                                td(margin_right=16)[textbox(v)],
+                            ]
+                        ]
+                    ]
+                    for group in throttle_groups
+                ]
+            ] if is_open else None,
+        ],
+    ]
+
+    # table()[
+    #         *[tr()[
+    #             *[td()[key_val(k, v)] for k, v in throttle],
+    #         ] for throttle in throttle_groups],
+    #     ],
+
+def pattern_pills(patterns_names):
+    div, text = actions.user.ui_elements(["div", "text"])
+
+    # iterate through patterns, count the characters for each name, and add to current line until we hit a limit
+    # then start a new line
+    # max_line_length = 20
+
+    lines = []
+    current_line = []
+    current_line_length = 0
+    max_line_length = 45
+    for name in patterns_names:
+        name_length = len(name)
+        if current_line_length + name_length > max_line_length:
+            lines.append(current_line)
+            current_line = [name]
+            current_line_length = name_length + 4
+        else:
+            current_line.append(name)
+            current_line_length += name_length + 4
+
+    lines.append(current_line)
+
+    return div(flex_direction="column", gap=8, padding=16)[
+        *[div(flex_direction="row", gap=8)[
+            *[pattern_pill(name) for name in line]
+        ] for line in lines]
+    ]
+
+def overrides_panel():
+    div, text, icon, component, switch = actions.user.ui_elements(["div", "text", "icon", "component", "switch"])
+    patterns = get_pattern_json()
+
+
+    return div(overflow_y="scroll", width=400, background_color="#292A2F", border_left=1, border_color=BORDER_COLOR, height=750)[
+        div(flex_direction="row", justify_content="space_between", align_items="center", border_bottom=1, border_color=BORDER_COLOR)[
+            div(flex_direction="row", gap=8, align_items="center")[
+                # switch(id="use_overrides", size=16, margin_left=12, on_change=lambda e: print("use_overrides", e.checked)),
+                text("Draft pattern overrides", font_size=20, padding=16),
+            ],
+            # icon("rotate_left", size=16, color="999999", padding=16),
+        ],
+        # pattern_pills(patterns.keys()),
+        *[component(override_pattern, props={
+            "name": pattern_name,
+        }) for pattern_name in patterns.keys()],
+        # div(flex_direction="row", align_items="center", gap=16, padding=12, border_radius=4, border_width=1, border_color=BORDER_COLOR)[
+        #     icon("chevron_right", size=16, color="999999"),
+        #     text("Column visibility"),
+        # ],
+        # div(flex_direction="row", align_items="center", gap=16, padding=12, border_radius=4, border_width=1, border_color=BORDER_COLOR)[
+        #     icon("chevron_right", size=16, color="999999"),
+        #     text("Filters"),
+        # ],
+    ]
+
 def page_detect_frames():
     div, component, text = actions.user.ui_elements(["div", "component", "text"])
+
+    # patterns = get_pattern_json()
+
+    # return div(flex_direction="column")[
+    #     div(id="test_parent", flex_direction="column", gap=16, padding=16, width="100%")[
+    #         div(id="test", flex_direction="row", gap=8, flex_wrap=True)[
+    #             *[pattern_pill(p) for p in patterns.keys()],
+    #         ],
+    #         text("hello"),
+    #     ],
+    #     text("bottom"),
+    # ]
     state = actions.user.ui_elements("state")
     capture_updating = state.get("capture_updating", False)
 
-    return div(flex_direction="row", padding=16, gap=16, height="100%")[
-        # Graph Section
-        div(flex_direction="column", gap=16)[
-            # div(position="relative", background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
-            #     component(noise_power_probability),
-            #     # component(graph_test),
-            #     div(position="absolute", top=0, right=0)[
-            #         text("Updating...", font_size=14, padding=2)
-            #     ] if capture_updating else None,
-            # ],
-            div(flex_direction="row", gap=16)[
-                active_patterns(),
-                # div(background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
-                #     component(pattern, props={
-                #         "name": "guh",
-                #         "color": "FF7808",
-                #     }),
-                # ],
-            ],
+    return div(background_color="191B1F", flex_direction="row", height=750)[
+        div(flex_direction="column", background_color="#292A2F", gap=16, height=750, border_right=1, border_color=BORDER_COLOR)[
+            detected_patterns(),
         ],
-        div(flex_direction="column", gap=16)[
-            div(background_color="191B1F", position="relative", flex=1, border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
-                table_controls(),
+        div(flex_direction="column", gap=16, flex=1)[
+            div(position="relative", flex=1)[
+                div(flex_direction="row", padding=16, justify_content="space_between", align_items="center")[
+                    text("Frames", font_size=24),
+                    legend(),
+                    table_controls(),
+                ],
                 component(table_test),
                 div(position="absolute", top=0, right=0)[
                     text("Updating...", font_size=14, padding=2)
                 ] if capture_updating else None,
             ],
+            # legend,
         ],
-        div()[
-            div(background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
-                legend,
-            ],
-        ],
-        # div(flex_direction="column", gap=16)[
-        #     div(background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
-        #         component(pattern, props={
-        #             "name": "pop",
-        #             "color": "73BF69",
-        #         }),
-        #     ],
-        #     div(background_color="191B1F", border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
-        #         component(pattern, props={
-        #             "name": "guh",
-        #             "color": "FF7808",
-        #         }),
-        #     ],
-        # ],
+        # overrides_panel(),
     ]
 
 def page_log():
@@ -1609,20 +1547,39 @@ def page_about():
     ]
 
 tab_to_page = {
-    "Detect frames": page_detect_frames,
-    "Log": page_log,
-    "Timeline": page_patterns,
-    "Stats": page_patterns,
-    "Patterns": page_patterns,
+    "Frames": page_detect_frames,
+    # "Log": page_log,
+    # "Timeline": page_patterns,
+    # "Stats": page_patterns,
+    # "Patterns": page_patterns,
     "About": page_about,
 }
+
+def global_options():
+    # a horizontal row of checkbox items for "Disable noise actions", "Allow pop action", and a switch for "Use overrides"
+    div, checkbox, text, switch, button, icon = actions.user.ui_elements(["div", "checkbox", "text", "switch", "button", "icon"])
+
+    return div(flex_direction="row", gap=24, align_items="center")[
+        div(flex_direction="row", gap=8, align_items="center")[
+            checkbox(id="disable_noise_actions"),
+            text("Disable actions when listening", for_id="disable_noise_actions"),
+        ],
+        div(flex_direction="row", gap=8, align_items="center")[
+            checkbox(id="allow_pop_action"),
+            text("Allow pop action when listening", for_id="allow_pop_action"),
+        ],
+        button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
+            text("Select play/stop noise"),
+            icon("chevron_down", size=14),
+        ],
+    ]
 
 def parrot_tester_new_ui():
     window, div, text, screen, button, icon, state, style, component = actions.user.ui_elements([
         "window", "div", "text", "screen", "button", "icon", "state", "style", "component"
     ])
 
-    tab, set_tab = state.use("tab", "Detect frames")
+    tab, set_tab = state.use("tab", "Frames")
 
     style({
         "*": {
@@ -1635,29 +1592,34 @@ def parrot_tester_new_ui():
     })
 
     return screen(justify_content="center", align_items="center")[
-        window(title=HEADER_TEXT, on_close=parrot_tester_disable, flex_direction="column", min_width=800, background_color="111217", border_radius=8, border_width=1, border_color=BORDER_COLOR)[
+        window(title=HEADER_TEXT, on_close=parrot_tester_disable, flex_direction="column", width=1100, background_color="#191B1F", border_radius=8, border_width=1, border_color=WINDOW_BORDER_COLOR)[
             # Header Section
-            div(flex_direction="row", justify_content="space_between", align_items="center", padding=16)[
-                play_button(),
-                div(flex_direction="row", gap=8, align_items="center")[
-                    button(on_click=lambda e: print("Docs clicked"), border_radius=4, gap=8, padding=8, flex_direction="row", align_items="center")[
-                        text(DOCS_BUTTON_TEXT, font_size=16, color="FFFFFF"),
-                        icon("external_link", size=16)
-                    ],
-                    button(on_click=lambda e: print("Patterns clicked"), border_radius=4, gap=8, padding=8, flex_direction="row", align_items="center")[
-                        text(PATTERNS_BUTTON_TEXT, font_size=16, color="FFFFFF"),
-                        icon("file_text", size=16)
-                    ]
-                ]
+            div(flex_direction="row", align_items="flex_end", border_bottom=1, border_color=BORDER_COLOR, position="relative")[
+                div(padding=16)[
+                    play_button(),
+                ],
+                div(flex_direction="row", position="absolute", left=300, bottom=0)[
+                    *[button(on_click=lambda e, l=label: set_tab(l), padding=16, position="relative")[
+                        div(position="absolute", bottom=0, background_color=ACTIVE_COLOR, height=3, width="100%", border_radius=2) if tab == label else None,
+                        text(label, font_size=16, color="FFFFFF")
+                    ] for label in TABS]
+                ],
+                # div(flex_direction="row", gap=8, align_items="center")
+                # [
+                    # global_options,
+                    # button(on_click=lambda e: print("Docs clicked"), border_radius=4, gap=8, padding=8, flex_direction="row", align_items="center")[
+                    #     text(DOCS_BUTTON_TEXT, font_size=16, color="FFFFFF"),
+                    #     icon("external_link", size=16)
+                    # ],
+                    # button(on_click=lambda e: print("Patterns clicked"), border_radius=4, gap=8, padding=8, flex_direction="row", align_items="center")[
+                    #     text(PATTERNS_BUTTON_TEXT, font_size=16, color="FFFFFF"),
+                    #     icon("file_text", size=16)
+                    # ]
+                # ]
             ],
             # Tabs Section
-            div(flex_direction="row", border_width=1, border_color=BORDER_COLOR, background_color="191B1F", margin_right=16, margin_left=16)[
-                *[button(on_click=lambda e, l=label: set_tab(l), padding=16, position="relative")[
-                    div(position="absolute", bottom=0, background_color=ACTIVE_COLOR, height=3, width="100%", border_radius=2) if tab == label else None,
-                    text(label, font_size=16, color="FFFFFF")
-                ] for label in TABS]
-            ],
-            div(width=1400, height=700, overflow_y="scroll")[
+
+            div(height=750)[
                 tab_to_page[tab](),
             ]
         ]
