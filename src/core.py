@@ -81,18 +81,21 @@ class ParrotTesterFrame:
         self.f2 = frame.f2
         self.patterns = []
         self.detected = False
+        self.grace_detected = False
 
-    def add_pattern(self, name: str, sounds: set[str], probability: float, detected: bool, throttled: bool, graceperiod: bool, color: str):
+    def add_pattern(self, name: str, sounds: set[str], probability: float, detected: bool, throttled: bool, graceperiod: bool, color: str, grace_detected=bool):
         if probability > self.THRESHOLD_PROBABILITY:
             if detected:
                 self.detected = True
+            if grace_detected:
+                self.grace_detected = True
             self.patterns.append({
                 "name": name,
                 "sounds": sounds,
                 "probability": probability,
-                "status": "detected" if detected else "throttled" if throttled else "",
+                "status": "grace_detected" if grace_detected else "detected" if detected else "throttled" if throttled else "",
                 "graceperiod": graceperiod,
-                "color": color
+                "color": color,
             })
 
     def freeze(self):
@@ -114,10 +117,12 @@ class ParrotTesterFrame:
     @property
     def winner_power_threshold(self):
         name = self.winner_name
-        # print("name", name)
-        x = patterns_json.get(name, {}).get("threshold", {}).get(">power", None)
-        # print("power_threshold", x)
-        return x
+        return patterns_json.get(name, {}).get("threshold", {}).get(">power", None)
+
+    @property
+    def winner_grace_power_threshold(self):
+        name = self.winner_name
+        return patterns_json.get(name, {}).get("grace_threshold", {}).get(">power", None)
 
     @property
     def winner_probability(self):
@@ -405,6 +410,61 @@ def reset_capture_collection():
             # for a in active:
             #     winner_label, winner_prob = next(iter(frame.classes.items()))
             #     print('parrot', f"predict {winner_label} {winner_prob * 100:.2f}% pow={frame.power:.2f} f0={frame.f0:.3f} f1={frame.f1:.3f} f2={frame.f2:.3f}")
+def determine_grace_detected(detect: bool, uses_grace_thresholds: bool, power: float, probability: float, pattern: dict) -> bool:
+    # if not graceperiod:
+    #     return False
+    # if not detect or not graceperiod:
+    #     return False
+
+    # lowest_power_thresholds[0] = normal thresholds
+    # lowest_power_thresholds[1] = grace period thresholds
+    if not detect:
+        return False
+
+    power_threshold = pattern.lowest_power_thresholds[0]
+    grace_power_threshold = pattern.lowest_power_thresholds[1]
+    print(f"power: {grace_power_threshold} < {power} < {power_threshold}")
+    if 0 < grace_power_threshold < power < power_threshold:
+        return True
+
+    # print(f"power: {power} < {power_threshold}")
+    # # Since we already know if it's detected, just check if below normal thresholds
+    # if power < power_threshold:
+    #     return True
+    # if ">probability" in threshold and probability < threshold[">probability"]:
+    #     return True
+
+    return False
+
+def is_grace_detected(pattern, frame) -> bool:
+    grace_detected = False
+    print(f"graceperiod_until: {pattern.timestamps.graceperiod_until}")
+    print(f"frame.ts: {frame.ts}")
+    print(f"pattern.is_active(frame.ts): {pattern.is_active(frame.ts)}")
+    print(f"pattern.match_pattern(pattern, frame, pattern.timestamps.graceperiod_until): {pattern.match_pattern(pattern, frame, pattern.timestamps.graceperiod_until)}")
+    if pattern.timestamps.graceperiod_until and frame.ts < pattern.timestamps.graceperiod_until:
+        if pattern.is_active(frame.ts) and pattern.match_pattern(pattern, frame, pattern.timestamps.graceperiod_until):
+            print(f"grace detected: {pattern.name} {frame.ts}")
+            grace_detected = True
+    return grace_detected
+
+def is_using_grace_thresholds_for_detection(pattern, frame):
+    return frame.ts < pattern.timestamps.graceperiod_until
+
+def force_normal_threshold_detection(pattern, frame):
+    return pattern.match_pattern(pattern, frame, graceperiod_until=0)
+
+def detect(pattern, frame):
+    detected = pattern.detect(frame)
+    grace_detected = False
+    if detected and pattern.timestamps.graceperiod_until and \
+            is_using_grace_thresholds_for_detection(pattern, frame):
+        detection_normal = force_normal_threshold_detection(pattern, frame)
+        if not detection_normal:
+            grace_detected = True
+
+    return detected, grace_detected
+
 def wrap_pattern_match(parrot_delegate):
     pattern_index = {
         name: index for index, name in enumerate(parrot_delegate.patterns.keys())
@@ -416,28 +476,29 @@ def wrap_pattern_match(parrot_delegate):
         buffer.add(parrot_tester_frame)
 
         for pattern in parrot_delegate.patterns.values():
-            detect = pattern.detect(frame)
-            # parrot_tester_frame.add_pattern(
-            #     name=pattern.name,
-            #     probability=frame.classes.get(pattern.name, 0),
-            #     detected=detect,
-            #     throttled=pattern.timestamps.throttled_at,
-            # )
+            # uses_grace_thresholds = frame.ts < pattern.timestamps.graceperiod_until
+            # grace_detected = is_grace_detected(pattern, frame)
+            # this gives me detected, but i need grace_detected
+            # detect = pattern.detect(frame)
+            detected, grace_detected = detect(pattern, frame)
+            graceperiod = pattern.timestamps.graceperiod_until > frame.ts
+            probability = sum(frame.classes.get(label, 0) for label in pattern.labels)
             parrot_tester_frame.add_pattern(
                 name=pattern.name,
                 sounds=pattern.labels,
-                probability=sum(frame.classes.get(label, 0) for label in pattern.labels),
-                detected=detect,
+                probability=probability,
+                detected=detected,
+                grace_detected=grace_detected,
                 throttled=pattern.timestamps.throttled_at > 0 and \
                     pattern.timestamps.throttled_until > frame.ts,
-                graceperiod=pattern.timestamps.graceperiod_until > frame.ts,
+                graceperiod=graceperiod,
                 color=get_color(pattern_index[pattern.name]),
             )
-            if detect:
+
+            if detected:
                 active.add(pattern.name)
                 throttles = pattern.get_throttles()
                 parrot_delegate.throttle_patterns(throttles, frame.ts)
-
 
         parrot_tester_frame.freeze()
         capture_collection.add(parrot_tester_frame, active)

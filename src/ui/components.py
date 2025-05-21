@@ -7,6 +7,7 @@ from ..constants import (
     ACTIVE_COLOR,
     ACCENT_COLOR,
     BORDER_COLOR,
+    GRACE_COLOR,
 )
 
 def play_button():
@@ -54,14 +55,18 @@ def tabs(props):
 def legend():
     div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
 
-    return div(flex_direction="row", gap=32, align_items="flex_end")[
+    return div(flex_direction="row", gap=32, align_items="flex_end", padding=16, border_width=1, background_color="#292A2F", border_color=BORDER_COLOR)[
         div(flex_direction="row", gap=8, align_items="center")[
             text("Detected"),
             icon("check", size=14, color="73BF69", stroke_width=3),
         ],
         div(flex_direction="row", gap=8, align_items="center")[
-            text("Throttle"),
+            text("Throttled"),
             icon("clock", size=14, color="FFCC00"),
+        ],
+        div(flex_direction="row", gap=8, align_items="center")[
+            text("Grace detected"),
+            tilda_icon(),
         ],
         div(flex_direction="row", gap=8, align_items="center")[
             text("Not detected"),
@@ -85,21 +90,26 @@ def number(value, **kwargs):
 
 def status_cell(status: str, graceperiod: bool = False):
     div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
+    svg, circle = actions.user.ui_elements_svg(["svg", "circle"])
 
     s = None
 
-    if status == "detected":
-        s = icon("check", size=16, color="73BF69", stroke_width=3)
-    if status == "throttled":
-        s = icon("clock", size=16, color="FFCC00")
-    if s:
-        # if graceperiod:
-        #     return div(flex_direction="row", gap=4, align_items="center")[
-        #         text("~", color="C6053D", font_weight="bold"),
-        #         s,
+    if status =="grace_detected":
+        s = tilda_icon()
+        # s = div(position="relative")[
+        #     icon("check", size=16, color="#73BF69", stroke_width=3),
+        #     div(position="absolute", right="100%", height="100%")[
+        #         tilda_icon(),
+        #         # svg(size=16)[
+        #         #     circle(cx=12, cy=12, r=4, fill="#48CEFF"),
+        #         # ]
         #     ]
-        return s
-    return text("-", color="999999")
+        # ]
+    elif status == "detected":
+        s = icon("check", size=16, color="#73BF69", stroke_width=3)
+    elif status == "throttled":
+        s = icon("clock", size=16, color="#FFCC00")
+    return s if s else text("-", color="#999999")
 
 def power_ratio_bar(power: float, patterns: list, power_threshold: float = None):
     div = actions.user.ui_elements("div")
@@ -133,8 +143,14 @@ def table_controls():
         ],
     ]
 
+def tilda_icon():
+    svg, path = actions.user.ui_elements_svg(["svg", "path"])
+    return svg(size=14, stroke=GRACE_COLOR, stroke_width=4)[
+        path(d="M4 14 Q8 10, 12 14 T20 14")
+    ]
+
 def pattern(props):
-    div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
+    div, text, icon, button = actions.user.ui_elements(["div", "text", "icon", "button"])
     table, tr, td, style = actions.user.ui_elements(["table", "tr", "td", "style"])
 
     pattern_data = get_pattern_json(props["name"])
@@ -155,51 +171,78 @@ def pattern(props):
         },
     })
 
-    throttles = pattern_data.get("throttle", {})
-    throttle_items = list(throttles.items())
+    throttle_items = list(pattern_data.get("throttle", {}).items())
     throttle_groups = [throttle_items[i:i + 2] for i in range(0, len(throttle_items), 2)]
+    grace_threshold_items = list(pattern_data.get("grace_threshold", {}).items())
+    grace_threshold_groups = [grace_threshold_items[i:i + 2] for i in range(0, len(grace_threshold_items), 2)]
 
     return div(id=f"pattern_{props['name']}", padding=16, flex_direction="column", gap=8, width=300, border_bottom=1, border_color=BORDER_COLOR)[
-        div(flex_direction="row", gap=8, align_items="center", padding_bottom=8)[
-            rect_color(pattern_color, size=14),
-            text(props["name"], font_size=20),
-        ],
-        div(justify_content="center", align_items="center")[
-            div()[
-                div(flex_direction="row", gap=8, margin_left=15, align_items="center")[
-                    text("sounds", font_size=14, color=ACCENT_COLOR),
-                    text(",".join(pattern_data.get("sounds", [])), font_size=14),
-                ],
-                table(padding=8, padding_bottom=0)[
-                    tr()[
-                        td(position="relative")[
-                            text(">power", font_size=14, color=ACCENT_COLOR),
-                        ],
-                        td(margin_right=16, position="relative")[
-                            number(pattern_data.get("threshold", {}).get(">power", "0")),
-                        ],
-                        td()[text(">probability", font_size=14, color=ACCENT_COLOR)],
-                        td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"))],
-                    ],
-                    *[
-                        tr()[
-                            *[
-                                item
-                                for k, v in group
-                                for item in [
-                                    td()[
-                                        div(flex_direction="row", gap=4, align_items="center")[
-                                            icon("clock", size=14, color="FFCC00"),
-                                            text(k, font_size=14, color=ACCENT_COLOR),
-                                        ]
-                                    ],
-                                    td(margin_right=16)[number(v)],
-                                ]
-                            ]
-                        ]
-                        for group in throttle_groups
-                    ]
-                ],
+        div(flex_direction="row", gap=8, align_items="center", padding_bottom=8, justify_content="space_between")[
+            div(flex_direction="row", gap=8, align_items="center")[
+                rect_color(pattern_color, size=14),
+                text(props["name"], font_size=20),
+            ],
+            button(on_click=lambda e: print(f"Edit {props['name']}"))[
+                icon("edit", size=16, color=ACCENT_COLOR, stroke_width=3),
             ]
         ],
+        div(justify_content="center", align_items="flex_start")[
+            div(flex_direction="row", gap=8, margin_left=15, align_items="center")[
+                text("sounds", font_size=14, color=ACCENT_COLOR),
+                text(",".join(pattern_data.get("sounds", [])), font_size=14),
+            ],
+            table(padding=8, padding_bottom=0)[
+                tr()[
+                    td(position="relative")[
+                        text(">power", font_size=14, color=ACCENT_COLOR),
+                    ],
+                    td(margin_right=16, position="relative")[
+                        number(pattern_data.get("threshold", {}).get(">power", "0")),
+                    ],
+                    td()[text(">probability", font_size=14, color=ACCENT_COLOR)],
+                    td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"))],
+                ],
+                *[
+                    tr()[
+                        *[
+                            item
+                            for k, v in group
+                            for item in [
+                                td()[
+                                    div(flex_direction="row", gap=4, align_items="center")[
+                                        icon("clock", size=14, color="FFCC00"),
+                                        text(k, font_size=14, color=ACCENT_COLOR),
+                                    ]
+                                ],
+                                td(margin_right=16)[number(v)],
+                            ]
+                        ]
+                    ]
+                    for group in throttle_groups
+                ]
+            ],
+            div(flex_direction="row", gap=8, margin_left=15, align_items="center", margin_top=8)[
+                text("graceperiod", font_size=14, color=GRACE_COLOR),
+                number(pattern_data.get("graceperiod", "")),
+            ] if pattern_data.get("graceperiod", None) else None,
+            table(padding=8, padding_bottom=0)[
+                *[
+                    tr()[
+                        *[
+                            item
+                            for k, v in group
+                            for item in [
+                                td()[
+                                    div(flex_direction="row", gap=4, align_items="center")[
+                                        text(k, font_size=14, color=GRACE_COLOR),
+                                    ]
+                                ],
+                                td(margin_right=16)[number(v)],
+                            ]
+                        ]
+                    ]
+                    for group in grace_threshold_groups
+                ]
+            ] if grace_threshold_groups else None,
+        ]
     ]

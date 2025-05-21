@@ -101,7 +101,8 @@ def table_frames():
                     power_ratio_bar(
                         frame.power,
                         frame.patterns,
-                        frame.winner_power_threshold if frame.detected else None
+                        frame.winner_grace_power_threshold if frame.grace_detected else \
+                            frame.winner_power_threshold if frame.detected else None
                     )
                 ],
             ] for frame in frames
