@@ -28,8 +28,8 @@ def detected_patterns():
                 seen.add(name)
 
     return div(height="100%")[
-        text("Detected patterns", padding=16,font_size=20, border_bottom=1, border_color=BORDER_COLOR),
-        div(flex_direction="column", overflow_y="scroll", height="100%", width=300)[
+        text("Detected patterns", padding=16, font_size=20, border_bottom=1, border_color=BORDER_COLOR, min_width=320),
+        div(flex_direction="column", overflow_y="scroll", height="100%")[
             *[div()[
                 component(pattern, props={
                     "name": pattern_name

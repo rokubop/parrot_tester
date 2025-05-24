@@ -150,7 +150,7 @@ def tilda_icon():
     ]
 
 def pattern(props):
-    div, text, icon, button = actions.user.ui_elements(["div", "text", "icon", "button"])
+    div, text, icon, button, state = actions.user.ui_elements(["div", "text", "icon", "button", "state"])
     table, tr, td, style = actions.user.ui_elements(["table", "tr", "td", "style"])
 
     pattern_data = get_pattern_json(props["name"])
@@ -176,13 +176,13 @@ def pattern(props):
     grace_threshold_items = list(pattern_data.get("grace_threshold", {}).items())
     grace_threshold_groups = [grace_threshold_items[i:i + 2] for i in range(0, len(grace_threshold_items), 2)]
 
-    return div(id=f"pattern_{props['name']}", padding=16, flex_direction="column", gap=8, width=300, border_bottom=1, border_color=BORDER_COLOR)[
+    return div(id=f"pattern_{props['name']}", padding=16, flex_direction="column", gap=8, min_width=320, border_bottom=1, border_color=BORDER_COLOR)[
         div(flex_direction="row", gap=8, align_items="center", padding_bottom=8, justify_content="space_between")[
             div(flex_direction="row", gap=8, align_items="center")[
                 rect_color(pattern_color, size=14),
                 text(props["name"], font_size=20),
             ],
-            button(on_click=lambda e: print(f"Edit {props['name']}"))[
+            button(on_click=lambda e: state.set("edit_pattern", props['name']))[
                 icon("edit", size=16, color=ACCENT_COLOR, stroke_width=3),
             ]
         ],
@@ -245,4 +245,23 @@ def pattern(props):
                 ]
             ] if grace_threshold_groups else None,
         ]
+    ]
+
+def removable_pill(name):
+    div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
+
+    return div(flex_direction="row", border_width=1, border_color="555555", background_color=f"55555533", padding=4, border_radius=4)[
+        text(name, font_size=14),
+        icon("close", size=14, color="555555", stroke_width=3, margin_left=8),
+    ]
+
+def pattern_pill(name):
+    div, text = actions.user.ui_elements(["div", "text"])
+
+    if name in get_pattern_json():
+        pattern_color = get_pattern_color(name)
+    else:
+        pattern_color = "555555"
+    return div(border_width=1, border_color=pattern_color, background_color=f"{pattern_color}33", padding=4, border_radius=4)[
+        text(f"+ {name}", font_size=14)
     ]
