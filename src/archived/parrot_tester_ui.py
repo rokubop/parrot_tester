@@ -5,7 +5,7 @@ import re
 import random
 import math
 import time
-from .core import (
+from ..core import (
     parrot_tester_initialize,
     restore_patterns,
     get_pattern_json,

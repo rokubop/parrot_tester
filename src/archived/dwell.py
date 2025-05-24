@@ -32,4 +32,4 @@ def register_dwell_toolbar():
 	]
     actions.user.hud_register_dwell_toolbar('dwell_actions', keys)
 
-app.register('ready', register_dwell_toolbar)
+# app.register('ready', register_dwell_toolbar)

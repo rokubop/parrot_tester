@@ -1,5 +1,5 @@
 from talon import actions
-from .components import (
+from ..components import (
     legend,
     number,
     status_cell,
@@ -7,7 +7,7 @@ from .components import (
     table_controls,
     pattern
 )
-from ..constants import (
+from ...constants import (
     SECONDARY_COLOR,
     BORDER_COLOR,
 )
@@ -32,7 +32,8 @@ def detected_patterns():
         div(flex_direction="column", overflow_y="scroll", height="100%")[
             *[div()[
                 component(pattern, props={
-                    "name": pattern_name
+                    "name": pattern_name,
+                    "highlight_when_active": False,
                 })
             ] for pattern_name in patterns]
         ],

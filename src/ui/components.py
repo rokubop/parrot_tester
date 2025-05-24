@@ -10,48 +10,6 @@ from ..constants import (
     GRACE_COLOR,
 )
 
-def play_button():
-    text, icon, button, state = actions.user.ui_elements(["text", "icon", "button", "state"])
-    play, set_play = state.use("play", False)
-    play_bg_color = "#191B1F"
-
-    def toggle_play(e):
-        set_play(not play)
-
-    if play:
-        return button(on_click=toggle_play, align_items="center", gap=16, padding=12, padding_left=24, padding_right=28, flex_direction="row", border_width=1, margin_right=16, border_color="333333", border_radius=16)[
-            icon("stop", color="#C6053D"),
-            text("Stop listening"),
-        ]
-    else:
-        return button(on_click=toggle_play, autofocus=True, align_items="center", gap=16, padding=12, padding_left=24, padding_right=28, flex_direction="row", border_width=1, margin_right=16, border_color="333333", border_radius=16)[
-            icon("play", fill=play_bg_color),
-            text("Start listening"),
-        ]
-
-tab_id_to_label = {
-    "frames": "Frames",
-    "about": "About",
-}
-
-def tabs(props):
-    div, button, text, state = actions.user.ui_elements(["div", "button", "text", "state"])
-    tab_state, set_tab = state.use("tab", props["start_tab"])
-
-    return div(flex_direction="row")[
-        *[button(on_click=lambda e, id=tab_id: set_tab(id), padding=16, position="relative")[
-            text(label, font_size=16, color="FFFFFF"),
-            div(
-                position="absolute",
-                bottom=0,
-                background_color=ACTIVE_COLOR,
-                height=3,
-                width="100%",
-                border_radius=2
-            ) if tab_state == tab_id else None
-        ] for tab_id, label in tab_id_to_label.items()]
-    ]
-
 def legend():
     div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
 
@@ -153,8 +111,11 @@ def pattern(props):
     div, text, icon, button, state = actions.user.ui_elements(["div", "text", "icon", "button", "state"])
     table, tr, td, style = actions.user.ui_elements(["table", "tr", "td", "style"])
 
-    pattern_data = get_pattern_json(props["name"])
-    pattern_color = get_pattern_color(props["name"])
+    pattern_name = props["name"]
+    highlight_when_active = props.get("highlight_when_active", False)
+
+    pattern_data = get_pattern_json(pattern_name)
+    pattern_color = get_pattern_color(pattern_name)
 
     style({
         "th": {
@@ -176,13 +137,24 @@ def pattern(props):
     grace_threshold_items = list(pattern_data.get("grace_threshold", {}).items())
     grace_threshold_groups = [grace_threshold_items[i:i + 2] for i in range(0, len(grace_threshold_items), 2)]
 
-    return div(id=f"pattern_{props['name']}", padding=16, flex_direction="column", gap=8, min_width=320, border_bottom=1, border_color=BORDER_COLOR)[
+    pattern_props = {
+        "padding": 16,
+        "flex_direction": "column",
+        "gap": 8,
+        "border_bottom": 1,
+        "border_color": BORDER_COLOR,
+    }
+
+    if highlight_when_active:
+        pattern_props["id"] = f"pattern_{pattern_name}"
+
+    return div(pattern_props)[
         div(flex_direction="row", gap=8, align_items="center", padding_bottom=8, justify_content="space_between")[
             div(flex_direction="row", gap=8, align_items="center")[
                 rect_color(pattern_color, size=14),
-                text(props["name"], font_size=20),
+                text(pattern_name, font_size=20),
             ],
-            button(on_click=lambda e: state.set("edit_pattern", props['name']))[
+            button(on_click=lambda e: state.set("edit_pattern", pattern_name))[
                 icon("edit", size=16, color=ACCENT_COLOR, stroke_width=3),
             ]
         ],

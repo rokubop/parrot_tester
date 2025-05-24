@@ -503,6 +503,9 @@ def wrap_pattern_match(parrot_delegate):
         parrot_tester_frame.freeze()
         capture_collection.add(parrot_tester_frame, active)
 
+        for name in active:
+            actions.user.ui_elements_highlight_briefly(f"pattern_{name}")
+
         return active
     return wrapper
 
@@ -553,16 +556,16 @@ def generate_parrot_integration_hook(import_path: str, current_file: Path):
 # This provides Talon access to parrot_delegate via actions,
 # while preserving the integrity of the original source.
 try:
-    from talon import Module
+    from talon import Context
     from {import_path} import parrot_delegate
     from .src.core import (
         parrot_tester_wrap_parrot_integration,
         parrot_tester_restore_parrot_integration
     )
 
-    mod = Module()
+    ctx = Context()
 
-    @mod.action_class
+    @ctx.action_class("user")
     class Actions:
         def parrot_tester_wrap_parrot_integration():
             \"\"\"Wrap parrot_integration file\"\"\"
@@ -612,7 +615,7 @@ def get_pattern_json(name: str = None):
     """Get the pattern JSON for a specific name."""
     global patterns_json
     if patterns_json is None:
-        raise ValueError("patterns_json is not initialized. Call parrot_tester_initialize() first.")
+        return {}
     if name is not None:
         return patterns_json.get(name, {})
     return patterns_json

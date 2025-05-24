@@ -1,10 +1,10 @@
 from talon import actions
-from ..constants import (
+from ...constants import (
     ACCENT_COLOR,
     BORDER_COLOR,
     SECONDARY_COLOR
 )
-from .components import (
+from ..components import (
     get_pattern_json,
     removable_pill,
     pattern_pill,
