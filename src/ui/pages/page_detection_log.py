@@ -12,53 +12,19 @@ from ...constants import (
     BORDER_COLOR,
 )
 
-def detected_patterns():
-    div, component, state, text = actions.user.ui_elements(["div", "component", "state", "text"])
-    state = actions.user.ui_elements("state")
-    last_capture = state.get("last_capture", None)
-    # frames = last_capture.detect_frames if last_capture else []
-    patterns = last_capture.detected_pattern_names if last_capture else []
-    other_patterns = last_capture.other_pattern_names if last_capture else []
-    # print("detected_patterns", patterns)
-    # patterns = []
-    # seen = set()
-
-    # for frame in frames:
-    #     for p in frame.patterns:
-    #         name = p["name"]
-    #         if name not in seen:
-    #             patterns.append(name)
-    #             seen.add(name)
-
-    return div(height="100%")[
-        text("Detected patterns", padding=16, font_size=20, border_bottom=1, border_color=BORDER_COLOR, min_width=320),
-        div(flex_direction="column", overflow_y="scroll", height="100%")[
-            *[div()[
-                component(pattern, props={
-                    "name": pattern_name,
-                    "highlight_when_active": False,
-                })
-            ] for pattern_name in patterns],
-            text("other patterns", color="FFFFFF", padding=16, padding_bottom=8, padding_top=24, font_size=14, opacity=0.4) if other_patterns else None,
-            *[div()[
-                component(pattern, props={
-                    "name": pattern_name,
-                    "highlight_when_active": False,
-                    "show_throttles": False,
-                    "show_grace": False,
-                    "small": True,
-                    "edit": False,
-                }),
-            ] for pattern_name in other_patterns]
-        ],
-    ]
-
-def table_frames():
+def table_log():
     div, text, icon, style = actions.user.ui_elements(["div", "text", "icon", "style"])
     table, th, tr, td = actions.user.ui_elements(["table", "th", "tr", "td"])
-    state = actions.user.ui_elements("state")
-    last_capture = state.get("last_capture", None)
-    frames = last_capture.frames if last_capture else []
+    state, effect = actions.user.ui_elements(["state", "effect"])
+    detection_frames = state.get("detection_frames", [])
+
+    def on_mount(e):
+        print("Mounting detection log table")
+
+    def on_unmount(e):
+        print("Unmounting detection log table")
+
+    effect(on_mount, on_unmount, [])
 
     style({
         "th": {
@@ -120,31 +86,31 @@ def table_frames():
                             frame.winner_power_threshold if frame.detected else None
                     )
                 ],
-            ] for frame in frames
+            ] for frame in detection_frames
         ],
     ]
 
-def page_frames():
+def page_detection_log():
     div, component, text = actions.user.ui_elements(["div", "component", "text"])
+    effect = actions.user.ui_elements("effect")
 
-    state = actions.user.ui_elements("state")
-    capture_updating = state.get("capture_updating", False)
+    def on_mount(e):
+        print("Mounting detection log page")
+
+    def on_unmount(e):
+        print("Unmounting detection log page")
+
+    effect(on_mount, on_unmount, [])
 
     return div(background_color="191B1F", flex_direction="row", height=750)[
-        div(flex_direction="column", background_color="#292A2F", gap=16, height=750, border_right=1, border_color=BORDER_COLOR)[
-            detected_patterns(),
-        ],
         div(flex_direction="column", gap=16, flex=1)[
             div(position="relative", flex=1)[
                 div(flex_direction="row", padding=16, justify_content="space_between", align_items="center")[
-                    text("Frames", font_size=24),
+                    text("Detection Log", font_size=24),
                     legend(),
                     table_controls(),
                 ],
-                component(table_frames),
-                div(position="absolute", top=0, right=0)[
-                    text("Updating...", font_size=14, padding=2)
-                ] if capture_updating else None,
+                component(table_log),
             ],
         ],
     ]

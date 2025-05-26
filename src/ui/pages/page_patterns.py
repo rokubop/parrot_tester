@@ -5,21 +5,24 @@ from ...constants import (
 from ..components import (
     pattern
 )
-from ...core import (
+from ...parrot_integration_wrapper import (
     get_pattern_json,
 )
 
 def page_patterns():
     div, component, table, tr, td, style = actions.user.ui_elements(["div", "component", "table", "tr", "td", "style"])
+    text = actions.user.ui_elements("text")
     patterns = get_pattern_json()
 
     pattern_items = list(patterns.items())  # (name, pattern)
     pattern_groups = [pattern_items[i:i + 4] for i in range(0, len(pattern_items), 4)]
 
+    # print("pattern_items", pattern_items)
+
     style({
         "td": {
             "padding": 8,
-        }
+        },
     })
 
     return div(flex_direction="column", padding=8, height="100%")[

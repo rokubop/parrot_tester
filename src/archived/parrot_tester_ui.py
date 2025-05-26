@@ -5,7 +5,7 @@ import re
 import random
 import math
 import time
-from ..core import (
+from ..parrot_integration_wrapper import (
     parrot_tester_initialize,
     restore_patterns,
     get_pattern_json,
@@ -600,6 +600,7 @@ def parrot_tester_toggle():
     if actions.user.ui_elements_is_active(parrot_tester_new_ui):
         parrot_tester_disable()
     else:
+        print("initializing parrot tester")
         parrot_tester_initialize()
         actions.user.ui_elements_show(parrot_tester_new_ui)
 

@@ -4,7 +4,7 @@
 try:
     from talon import Context
     from ...roku.roku_parrot_model.parrot_integration import parrot_delegate
-    from .src.core import (
+    from .src.parrot_integration_wrapper import (
         parrot_tester_wrap_parrot_integration,
         parrot_tester_restore_parrot_integration
     )
@@ -14,11 +14,9 @@ try:
     @ctx.action_class("user")
     class Actions:
         def parrot_tester_wrap_parrot_integration():
-            """Wrap parrot_integration file"""
             parrot_tester_wrap_parrot_integration(parrot_delegate)
 
         def parrot_tester_restore_parrot_integration():
-            """Restore parrot_integration file"""
             parrot_tester_restore_parrot_integration(parrot_delegate)
 except ImportError:
     pass

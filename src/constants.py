@@ -27,6 +27,7 @@ GRACE_COLOR = "#C483E5"
 SECONDARY_COLOR = "#CCCCCC"
 WINDOW_BORDER_COLOR = "#2F3137"
 BORDER_COLOR = "#000000"
+BORDER_COLOR_LIGHT = "#2E2D2D"
 
 def get_color(index: int) -> str:
     """Get color or loop back to start of list."""

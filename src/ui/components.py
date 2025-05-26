@@ -1,5 +1,5 @@
 from talon import actions
-from ..core import (
+from ..parrot_integration_wrapper import (
     get_pattern_json,
     get_pattern_color,
 )
@@ -43,8 +43,8 @@ def rect_color(color, size=20, **props):
     ]
 
 def number(value, **kwargs):
-    text = actions.user.ui_elements("text", **kwargs)
-    return text(value, font_family="consolas")
+    text = actions.user.ui_elements("text")
+    return text(value, font_family="consolas", **kwargs)
 
 def status_cell(status: str, graceperiod: bool = False):
     div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
@@ -113,6 +113,10 @@ def pattern(props):
 
     pattern_name = props["name"]
     highlight_when_active = props.get("highlight_when_active", False)
+    show_throttles = props.get("show_throttles", True)
+    show_grace = props.get("show_grace", True)
+    small = props.get("small", False)
+    edit = props.get("edit", True)
 
     pattern_data = get_pattern_json(pattern_name)
     pattern_color = get_pattern_color(pattern_name)
@@ -132,21 +136,59 @@ def pattern(props):
         },
     })
 
-    throttle_items = list(pattern_data.get("throttle", {}).items())
-    throttle_groups = [throttle_items[i:i + 2] for i in range(0, len(throttle_items), 2)]
-    grace_threshold_items = list(pattern_data.get("grace_threshold", {}).items())
-    grace_threshold_groups = [grace_threshold_items[i:i + 2] for i in range(0, len(grace_threshold_items), 2)]
+    if show_throttles:
+        throttle_items = list(pattern_data.get("throttle", {}).items())
+        throttle_groups = [throttle_items[i:i + 2] for i in range(0, len(throttle_items), 2)]
+    else:
+        throttle_groups = []
+
+    if show_grace:
+        grace_period = pattern_data.get("graceperiod", "")
+        grace_threshold_items = list(pattern_data.get("grace_threshold", {}).items())
+        grace_threshold_groups = [grace_threshold_items[i:i + 2] for i in range(0, len(grace_threshold_items), 2)]
+    else:
+        grace_period = ""
+        grace_threshold_groups = []
 
     pattern_props = {
         "padding": 16,
         "flex_direction": "column",
         "gap": 8,
-        "border_bottom": 1,
-        "border_color": BORDER_COLOR,
     }
 
     if highlight_when_active:
         pattern_props["id"] = f"pattern_{pattern_name}"
+
+    if small:
+        pattern_props["padding_bottom"] = 8
+        pattern_props["padding_top"] = 8
+    else:
+        pattern_props["border_bottom"] = 1
+        pattern_props["border_color"] = BORDER_COLOR
+
+    if small:
+        return div(pattern_props)[
+            div(flex_direction="row", gap=8, align_items="center", justify_content="space_between")[
+                div(flex_direction="row", gap=8, align_items="center")[
+                    rect_color(pattern_color, size=12, opacity=0.4),
+                    text(pattern_name, font_size=14, opacity=0.4),
+                ],
+            ],
+            div(flex_direction="row", justify_content="center")[
+                table()[
+                    tr()[
+                        td(position="relative")[
+                            text(">power", font_size=14, color=ACCENT_COLOR, opacity=0.4),
+                        ],
+                        td(margin_right=16, position="relative")[
+                            number(pattern_data.get("threshold", {}).get(">power", "0"), opacity=0.4),
+                        ],
+                        td()[text(">probability", font_size=14, color=ACCENT_COLOR, opacity=0.4)],
+                        td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"), opacity=0.4)],
+                    ],
+                ],
+            ],
+        ]
 
     return div(pattern_props)[
         div(flex_direction="row", gap=8, align_items="center", padding_bottom=8, justify_content="space_between")[
@@ -156,13 +198,13 @@ def pattern(props):
             ],
             button(on_click=lambda e: state.set("edit_pattern", pattern_name))[
                 icon("edit", size=16, color=ACCENT_COLOR, stroke_width=3),
-            ]
+            ] if edit else None,
         ],
         div(justify_content="center", align_items="flex_start")[
             div(flex_direction="row", gap=8, margin_left=15, align_items="center")[
                 text("sounds", font_size=14, color=ACCENT_COLOR),
                 text(",".join(pattern_data.get("sounds", [])), font_size=14),
-            ],
+            ] if not small else None,
             table(padding=8, padding_bottom=0)[
                 tr()[
                     td(position="relative")[
@@ -195,8 +237,8 @@ def pattern(props):
             ],
             div(flex_direction="row", gap=8, margin_left=15, align_items="center", margin_top=8)[
                 text("graceperiod", font_size=14, color=GRACE_COLOR),
-                number(pattern_data.get("graceperiod", "")),
-            ] if pattern_data.get("graceperiod", None) else None,
+                number(grace_period),
+            ] if grace_period else None,
             table(padding=8, padding_bottom=0)[
                 *[
                     tr()[

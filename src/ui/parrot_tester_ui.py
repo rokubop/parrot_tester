@@ -1,9 +1,11 @@
 from talon import actions
-from ..core import restore_patterns, parrot_tester_initialize
+from ..parrot_integration_wrapper import restore_patterns, parrot_tester_initialize
 from .pages.page_about import page_about
+from .pages.page_detection_log import page_detection_log
 from .pages.page_frames import page_frames
 from .pages.page_patterns import page_patterns
 from .pages.page_pattern_edit import edit_page
+from .pages.page_settings import page_settings
 from ..constants import (
     ACTIVE_COLOR,
     BORDER_COLOR,
@@ -13,7 +15,9 @@ import traceback
 
 tab_id_to_page = {
     "frames": page_frames,
+    "detection_log": page_detection_log,
     "patterns": page_patterns,
+    "settings": page_settings,
     "about": page_about,
 }
 
@@ -23,7 +27,7 @@ def tabs():
     div, button, text, state = actions.user.ui_elements(["div", "button", "text", "state"])
     tab_state, set_tab = state.use("tab")
 
-    return div(flex_direction="row")[
+    return div(flex_direction="row", align_items="flex_end")[
         *[button(on_click=lambda e, id=tab: set_tab(id), padding=16, position="relative")[
             text(format_label(tab), font_size=16, color="FFFFFF"),
             div(
@@ -36,7 +40,6 @@ def tabs():
             ) if tab_state == tab else None
         ] for tab in tab_id_to_page.keys()]
     ]
-
 
 common_play_button_props = {
     "padding": 8,
@@ -61,7 +64,10 @@ def play_button():
         show_hints = not new_play
         actions.user.ui_elements_toggle_hints(show_hints)
         set_play(new_play)
-        print(f"Play state changed to: {new_play}")
+        if new_play:
+            parrot_tester_initialize()
+        else:
+            parrot_tester_disable()
 
     if play:
         return button(
@@ -87,25 +93,28 @@ def play_button():
 def parrot_tester_disable():
     print("Disabling parrot tester")
     restore_patterns()
+
+def parrot_tester_disable_and_exit():
+    print("Disabling parrot tester")
+    restore_patterns()
     actions.user.ui_elements_hide_all()
 
 def parrot_tester_toggle():
     if actions.user.ui_elements_is_active(parrot_tester_ui):
-        parrot_tester_disable()
+        parrot_tester_disable_and_exit()
     else:
-        print("Enabling parrot tester")
         try:
             parrot_tester_initialize()
-            actions.user.ui_elements_show(parrot_tester_ui)
+            actions.user.ui_elements_show(parrot_tester_ui, show_hints=False)
         except Exception as e:
-            traceback.print_exc()
+            # traceback.print_exc()
             print(f"Error initializing parrot tester: {e}")
-            parrot_tester_disable()
+            parrot_tester_disable_and_exit()
             return
 
 def parrot_tester_ui():
-    window, div, screen, style = actions.user.ui_elements([
-        "window", "div", "screen", "style"
+    window, div, screen, style, component = actions.user.ui_elements([
+        "window", "div", "screen", "style", "component"
     ])
     state = actions.user.ui_elements(['state'])
     tab_state = state.get("tab", next(iter(tab_id_to_page)))
@@ -124,7 +133,7 @@ def parrot_tester_ui():
     return screen(justify_content="center", align_items="center")[
         window(
             title="Parrot Tester",
-            on_close=parrot_tester_disable,
+            on_close=parrot_tester_disable_and_exit,
             flex_direction="column",
             min_width=1100,
             background_color="#191B1F",
@@ -133,14 +142,15 @@ def parrot_tester_ui():
             border_color=WINDOW_BORDER_COLOR
         )[
             edit_page() if edit_pattern else (
-                div(flex_direction="row", align_items="flex_end", justify_content="space_between", border_bottom=1, border_color=BORDER_COLOR)[
+                div(flex_direction="row", align_items="stretch", justify_content="space_between", border_bottom=1, border_color=BORDER_COLOR)[
                     tabs(),
+                    # global_options(),
                     div(padding=16)[
                         play_button(),
                     ],
                 ],
                 div(min_height=750, max_height=900)[
-                    tab_id_to_page[tab_state](),
+                    component(tab_id_to_page[tab_state]),
                 ]
             )
         ]
