@@ -7,13 +7,14 @@ from ..constants import (
     ACTIVE_COLOR,
     ACCENT_COLOR,
     BORDER_COLOR,
+    BG_INPUT,
     GRACE_COLOR,
 )
 
 def legend():
     div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
 
-    return div(flex_direction="row", gap=32, align_items="flex_end", padding=16, border_width=1, background_color="#292A2F", border_color=BORDER_COLOR)[
+    return div(flex_direction="row", gap=32, padding=8, align_items="flex_end")[
         div(flex_direction="row", gap=8, align_items="center")[
             text("Detected"),
             icon("check", size=14, color="73BF69", stroke_width=3),
@@ -83,10 +84,30 @@ def power_ratio_bar(power: float, patterns: list, power_threshold: float = None)
     ]
 
 def table_controls():
-    div, text, icon, button = actions.user.ui_elements(["div", "text", "icon", "button"])
+    div, text, icon, button, checkbox, style = actions.user.ui_elements(["div", "text", "icon", "button", "checkbox", "style"])
     state = actions.user.ui_elements("state")
+    double_pop_pause, set_double_pop_pause = state.use("double_pop_pause", True)
 
-    return div(flex_direction="row", gap=16)[
+    checkbox_props = {
+        "background_color": BG_INPUT,
+        "border_color": BORDER_COLOR,
+        "border_width": 1,
+        "border_radius": 2,
+    }
+
+    return div(flex_direction="row", gap=24, margin_right=8)[
+        div(flex_direction="row", gap=8, align_items="center")[
+            checkbox(checkbox_props, id="double_pop_pause", checked=double_pop_pause, on_change=lambda e: set_double_pop_pause(e.checked)),
+            text("Double pop to pause", for_id="double_pop_pause"),
+        ],
+        div(flex_direction="row", gap=8, align_items="center")[
+            checkbox(checkbox_props, id="show_formants", on_change=lambda e: state.set("show_formants", e.checked)),
+            text("Show F0, F1, F2", for_id="show_formants"),
+        ],
+        div(flex_direction="row", gap=8, align_items="center")[
+            checkbox(checkbox_props, id="debug_mode", on_change=lambda e: state.set("debug_mode", e.checked)),
+            text("Debug mode", for_id="debug_mode"),
+        ],
         # button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
         #     text("Capture time"),
         #     icon("chevron_down", size=14),
@@ -95,10 +116,10 @@ def table_controls():
         #     text("Filters"),
         #     icon("chevron_down", size=14),
         # ],
-        button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, background_color="#292A2F", border_color=BORDER_COLOR, border_width=1, border_radius=4)[
-            text("Columns"),
-            icon("chevron_down", size=14),
-        ],
+        # button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, background_color="#292A2F", border_color=BORDER_COLOR, border_width=1, border_radius=4)[
+        #     text("Columns"),
+        #     icon("chevron_down", size=14),
+        # ],
     ]
 
 def tilda_icon():
@@ -116,7 +137,7 @@ def pattern(props):
     show_throttles = props.get("show_throttles", True)
     show_grace = props.get("show_grace", True)
     small = props.get("small", False)
-    edit = props.get("edit", True)
+    # edit = props.get("edit", True)
 
     pattern_data = get_pattern_json(pattern_name)
     pattern_color = get_pattern_color(pattern_name)
@@ -170,21 +191,21 @@ def pattern(props):
         return div(pattern_props)[
             div(flex_direction="row", gap=8, align_items="center", justify_content="space_between")[
                 div(flex_direction="row", gap=8, align_items="center")[
-                    rect_color(pattern_color, size=12, opacity=0.4),
-                    text(pattern_name, font_size=14, opacity=0.4),
+                    rect_color(pattern_color, size=12, opacity=0.5),
+                    text(pattern_name, font_size=14, opacity=0.5),
                 ],
             ],
             div(flex_direction="row", justify_content="center")[
                 table()[
                     tr()[
                         td(position="relative")[
-                            text(">power", font_size=14, color=ACCENT_COLOR, opacity=0.4),
+                            text(">power", font_size=14, color=ACCENT_COLOR, opacity=0.5),
                         ],
                         td(margin_right=16, position="relative")[
-                            number(pattern_data.get("threshold", {}).get(">power", "0"), opacity=0.4),
+                            number(pattern_data.get("threshold", {}).get(">power", "0"), opacity=0.5),
                         ],
-                        td()[text(">probability", font_size=14, color=ACCENT_COLOR, opacity=0.4)],
-                        td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"), opacity=0.4)],
+                        td()[text(">probability", font_size=14, color=ACCENT_COLOR, opacity=0.5)],
+                        td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"), opacity=0.5)],
                     ],
                 ],
             ],
@@ -196,9 +217,9 @@ def pattern(props):
                 rect_color(pattern_color, size=14),
                 text(pattern_name, font_size=20),
             ],
-            button(on_click=lambda e: state.set("edit_pattern", pattern_name))[
-                icon("edit", size=16, color=ACCENT_COLOR, stroke_width=3),
-            ] if edit else None,
+            # button(on_click=lambda e: state.set("edit_pattern", pattern_name))[
+            #     icon("edit", size=16, color=ACCENT_COLOR, stroke_width=3),
+            # ] if edit else None,
         ],
         div(justify_content="center", align_items="flex_start")[
             div(flex_direction="row", gap=8, margin_left=15, align_items="center")[

@@ -10,7 +10,25 @@ from ..components import (
 from ...constants import (
     SECONDARY_COLOR,
     BORDER_COLOR,
+    BORDER_COLOR_LIGHTER,
+    GRAY_SOFT,
+    BG_GRAY,
+    BG_DARKEST,
+    BG_DARK,
 )
+
+def subtitle(text_value):
+    text = actions.user.ui_elements("text")
+    return text(
+        text_value,
+        margin=8,
+        padding_top=6,
+        padding_bottom=8,
+        border_bottom=1,
+        color=GRAY_SOFT,
+        border_color=BORDER_COLOR_LIGHTER,
+        min_width=320
+    )
 
 def detected_patterns():
     div, component, state, text = actions.user.ui_elements(["div", "component", "state", "text"])
@@ -30,8 +48,10 @@ def detected_patterns():
     #             patterns.append(name)
     #             seen.add(name)
 
+
+
     return div(height="100%")[
-        text("Detected patterns", padding=16, font_size=20, border_bottom=1, border_color=BORDER_COLOR, min_width=320),
+        subtitle("Detected patterns"),
         div(flex_direction="column", overflow_y="scroll", height="100%")[
             *[div()[
                 component(pattern, props={
@@ -39,7 +59,7 @@ def detected_patterns():
                     "highlight_when_active": False,
                 })
             ] for pattern_name in patterns],
-            text("other patterns", color="FFFFFF", padding=16, padding_bottom=8, padding_top=24, font_size=14, opacity=0.4) if other_patterns else None,
+            subtitle("Other patterns") if other_patterns else None,
             *[div()[
                 component(pattern, props={
                     "name": pattern_name,
@@ -59,6 +79,7 @@ def table_frames():
     state = actions.user.ui_elements("state")
     last_capture = state.get("last_capture", None)
     frames = last_capture.frames if last_capture else []
+    show_formants = state.get("show_formants", False)
 
     style({
         "th": {
@@ -88,6 +109,17 @@ def table_frames():
             # th()[text("Sounds", color=SECONDARY_COLOR)],
             th(align_items="flex_end")[text("Power", color=SECONDARY_COLOR)],
             th(align_items="flex_end")[text("Prob.", color=SECONDARY_COLOR)],
+            *[
+                th(align_items="flex_end", justify_content="center")[
+                    text("F0", color=SECONDARY_COLOR),
+                ],
+                th(align_items="flex_end", justify_content="center")[
+                    text("F1", color=SECONDARY_COLOR),
+                ],
+                th(align_items="flex_end", justify_content="center")[
+                    text("F2", color=SECONDARY_COLOR),
+                ],
+            ] if show_formants else [],
             th(align_items="center")[text("Status", color=SECONDARY_COLOR)],
             th(align_items="flex_start")[div(flex_direction="row", gap=2)[
                 text("Power", color=SECONDARY_COLOR),
@@ -109,6 +141,17 @@ def table_frames():
                 td(align_items="flex_end")[div(gap=8)[
                     *[number(frame.format(p["probability"], 4)) for p in frame.patterns]
                 ]],
+                *[
+                    td(align_items="flex_end", justify_content="center")[
+                        number(str(round(frame.f0))),
+                    ],
+                    td(align_items="flex_end", justify_content="center")[
+                        number(str(round(frame.f1))),
+                    ],
+                    td(align_items="flex_end", justify_content="center")[
+                        number(str(round(frame.f2))),
+                    ],
+                ] if show_formants else [],
                 td(align_items="center")[div(gap=8, align_items="center")[
                     *[status_cell(p['status'], p['graceperiod']) for p in frame.patterns]
                 ]],
@@ -130,21 +173,34 @@ def page_frames():
     state = actions.user.ui_elements("state")
     capture_updating = state.get("capture_updating", False)
 
-    return div(background_color="191B1F", flex_direction="row", height=750)[
-        div(flex_direction="column", background_color="#292A2F", gap=16, height=750, border_right=1, border_color=BORDER_COLOR)[
+    return div(background_color=BG_DARKEST, flex_direction="row", height=750)[
+        div(flex_direction="column", background_color=BG_GRAY, gap=16, height=750, border_right=1, border_color=BORDER_COLOR)[
             detected_patterns(),
         ],
         div(flex_direction="column", gap=16, flex=1)[
-            div(position="relative", flex=1)[
-                div(flex_direction="row", padding=16, justify_content="space_between", align_items="center")[
-                    text("Frames", font_size=24),
-                    legend(),
-                    table_controls(),
+            div(flex=1, position="relative")[
+                div(background_color=BG_DARK, border_color=BORDER_COLOR, border_bottom=1)[
+                    div(flex_direction="row", padding=8, justify_content="space_between", align_items="center")[
+                        text("Frames", font_size=16),
+                        component(table_controls),
+                    ],
                 ],
-                component(table_frames),
-                div(position="absolute", top=0, right=0)[
-                    text("Updating...", font_size=14, padding=2)
-                ] if capture_updating else None,
+                div(position="relative", flex=1)[
+                    component(table_frames),
+                    div(position="absolute", top=0, right=0)[
+                        text("Updating...", font_size=14, padding=2)
+                    ] if capture_updating else None,
+                ],
+                div(
+                    position="absolute",
+                    bottom=0,
+                    right=0,
+                    flex_direction="row",
+                    justify_content="flex_end",
+                    background_color=BG_DARK,
+                )[
+                    legend(),
+                ],
             ],
         ],
     ]

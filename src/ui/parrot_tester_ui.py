@@ -4,10 +4,12 @@ from .pages.page_about import page_about
 from .pages.page_detection_log import page_detection_log
 from .pages.page_frames import page_frames
 from .pages.page_patterns import page_patterns
+from .pages.page_stats import page_stats
 from .pages.page_pattern_edit import edit_page
 from .pages.page_settings import page_settings
 from ..constants import (
     ACTIVE_COLOR,
+    BG_DARKEST,
     BORDER_COLOR,
     WINDOW_BORDER_COLOR,
 )
@@ -15,9 +17,10 @@ import traceback
 
 tab_id_to_page = {
     "frames": page_frames,
-    "detection_log": page_detection_log,
+    # "detection_log": page_detection_log,
     "patterns": page_patterns,
-    "settings": page_settings,
+    # "stats": page_stats,
+    # "settings": page_settings,
     "about": page_about,
 }
 
@@ -49,7 +52,6 @@ common_play_button_props = {
     "align_items": "center",
     "gap": 16,
     "border_width": 1,
-    "margin_right": 16,
     "border_radius": 2,
     "border_color": BORDER_COLOR,
 }
@@ -136,7 +138,7 @@ def parrot_tester_ui():
             on_close=parrot_tester_disable_and_exit,
             flex_direction="column",
             min_width=1100,
-            background_color="#191B1F",
+            background_color=BG_DARKEST,
             border_radius=8,
             border_width=1,
             border_color=WINDOW_BORDER_COLOR
@@ -145,7 +147,7 @@ def parrot_tester_ui():
                 div(flex_direction="row", align_items="stretch", justify_content="space_between", border_bottom=1, border_color=BORDER_COLOR)[
                     tabs(),
                     # global_options(),
-                    div(padding=16)[
+                    div(padding=8)[
                         play_button(),
                     ],
                 ],
