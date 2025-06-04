@@ -202,6 +202,10 @@ class Capture:
         self._detect_frames.append((frame, detect_frame_index))
         self.pattern_names.update(frame.pattern_names)
 
+    def detected_two_pops(self) -> bool:
+        pop_count = sum(1 for frame in self.detect_frames if "pop" == frame.winner_name)
+        return pop_count >= 2
+
     def complete(self):
         for i, frame in enumerate(self.frames):
             frame.ts_delta = frame.ts - self.detect_frames[0].ts
@@ -242,12 +246,20 @@ class CaptureCollection:
     def end_current_capture(self):
         if self.current_capture is not None:
             self.current_capture.complete()
+
             self.current_capture = None
             if self.end_current_capture_job is not None:
                 cron.cancel(self.end_current_capture_job)
             self.end_current_capture_job = None
-            actions.user.ui_elements_set_state("last_capture", self.captures[-1])
+            last_capture = self.captures[-1] if self.captures else None
+            actions.user.ui_elements_set_state("last_capture", last_capture)
             actions.user.ui_elements_set_state("capture_updating", False)
+
+            # double pop pause
+            if actions.user.ui_elements_get_state("double_pop_pause") and last_capture and last_capture.detected_two_pops():
+                actions.user.ui_elements_set_state("play", False)
+                actions.user.ui_elements_toggle_hints(True)
+                restore_patterns_paused()
 
     def clear(self):
         self.captures = []
@@ -493,7 +505,9 @@ def parrot_tester_initialize():
     # print(f"Parrot Integration Path: {parrot_integration_path}")
     # print(f"Patterns.py Path: {patterns_py_path}")
 
+def restore_patterns_paused():
+    actions.user.parrot_tester_restore_parrot_integration()
+
 def restore_patterns():
-    """Restore the original patterns.json file."""
     actions.user.parrot_tester_restore_parrot_integration()
     patterns_json.clear()

@@ -1,5 +1,9 @@
 from talon import actions
-from ..parrot_integration_wrapper import restore_patterns, parrot_tester_initialize
+from ..parrot_integration_wrapper import (
+    restore_patterns_paused,
+    restore_patterns,
+    parrot_tester_initialize
+)
 from .pages.page_about import page_about
 from .pages.page_detection_log import page_detection_log
 from .pages.page_frames import page_frames
@@ -69,7 +73,7 @@ def play_button():
         if new_play:
             parrot_tester_initialize()
         else:
-            parrot_tester_disable()
+            parrot_tester_pause()
 
     if play:
         return button(
@@ -91,6 +95,9 @@ def play_button():
             icon("play"),
             text("Start listening"),
         ]
+
+def parrot_tester_pause():
+    restore_patterns_paused()
 
 def parrot_tester_disable():
     print("Disabling parrot tester")
