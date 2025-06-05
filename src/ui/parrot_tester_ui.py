@@ -21,7 +21,7 @@ import traceback
 
 tab_id_to_page = {
     "frames": page_frames,
-    # "detection_log": page_detection_log,
+    "detection_log": page_detection_log,
     "patterns": page_patterns,
     # "stats": page_stats,
     # "settings": page_settings,

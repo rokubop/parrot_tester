@@ -64,21 +64,16 @@ def edit_page():
 
             div(flex_direction="row", gap=16)[
                 table()[
-                    # Header row
                     tr()[
                         th(width="20%")[text("Field")],
                         th(width="40%")[text("Original")],
                         th(width="40%")[text("Override")],
                     ],
-
-                    # Pattern name row
                     tr()[
                         td()[text("Pattern name")],
                         td()[text(edit_pattern)],
                         td()[input_text(id="pattern_name", value=edit_pattern)],
                     ],
-
-                    # Sounds row
                     tr()[
                         td()[text("Sounds")],
                         td()[text(", ".join(pattern_data.get("sounds", [])))],
@@ -89,7 +84,6 @@ def edit_page():
                             ],
                         ],
                     ],
-
                     tr()[
                         td()[text("Throttles")],
                     ],
@@ -98,8 +92,6 @@ def edit_page():
                         td()[text(value)],
                         td()[input_text(id=f"throttle_{key}", value=value, width=100)]
                     ] for key, value in pattern_data.get("throttle", {}).items()],
-
-                    # Detect after
                     tr()[
                         td()[text("Detect after")],
                         td()[text(str(pattern_data.get("detect_after", "")))],
@@ -107,13 +99,11 @@ def edit_page():
                     ],
                 ],
                 table(width="100%")[
-                    # Header row
                     tr()[
                         th(width="20%")[text("Field")],
                         th(width="40%")[text("Original")],
                         th(width="40%")[text("Override")],
                     ],
-
                     tr()[
                         td()[text("Thresholds")],
                     ],
@@ -127,7 +117,6 @@ def edit_page():
                         td()[text(pattern_data.get("threshold", {}).get(">probability", "0"))],
                         td()[input_text(id="threshold_probability", value=pattern_data.get("threshold", {}).get(">probability", "0"), width=100)],
                     ],
-
                     tr()[
                         td()[text("Grace period")],
                         td()[text(str(pattern_data.get("graceperiod", "")))],

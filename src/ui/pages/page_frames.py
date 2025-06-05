@@ -5,7 +5,8 @@ from ..components import (
     status_cell,
     power_ratio_bar,
     table_controls,
-    pattern
+    pattern,
+    subtitle,
 )
 from ...constants import (
     SECONDARY_COLOR,
@@ -16,19 +17,6 @@ from ...constants import (
     BG_DARKEST,
     BG_DARK,
 )
-
-def subtitle(text_value):
-    text = actions.user.ui_elements("text")
-    return text(
-        text_value,
-        margin=8,
-        padding_top=6,
-        padding_bottom=8,
-        border_bottom=1,
-        color=GRAY_SOFT,
-        border_color=BORDER_COLOR_LIGHTER,
-        min_width=320
-    )
 
 def detected_patterns():
     div, component, state, text = actions.user.ui_elements(["div", "component", "state", "text"])

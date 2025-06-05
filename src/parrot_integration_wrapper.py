@@ -9,7 +9,6 @@ from math import floor
 from .constants import get_color
 
 patterns_json = {}
-is_listening = False
 
 def get_talon_user_path():
     """Get the talon user path based on the platform."""
@@ -67,6 +66,13 @@ def truncate_stringify(x: float, decimals: int = 3) -> str:
     truncated = floor(x * factor) / factor
     return f"{truncated:.{decimals}f}"
 
+STATUS_ORDER = {
+    "detected": 0,
+    "grace_detected": 1,
+    "throttled": 2,
+    "": 3
+}
+
 class ParrotTesterFrame:
     THRESHOLD_PROBABILITY = 0.1
 
@@ -84,6 +90,8 @@ class ParrotTesterFrame:
         self.pattern_names = set()
         self.detected = False
         self.grace_detected = False
+        self.log_id = None
+        self.capture_id = None
 
     def add_pattern(self, name: str, sounds: set[str], probability: float, detected: bool, throttled: bool, graceperiod: bool, color: str, grace_detected=bool):
         if probability > self.THRESHOLD_PROBABILITY:
@@ -102,7 +110,14 @@ class ParrotTesterFrame:
             })
 
     def freeze(self):
-        self.patterns = sorted(self.patterns, key=lambda x: x["probability"], reverse=True)
+        self.patterns = sorted(
+            self.patterns,
+            key=lambda x: (
+                STATUS_ORDER.get(x["status"], 99),  # sort by status first
+                -x["probability"]                   # then by probability descending
+            )
+        )
+        # self.patterns = sorted(self.patterns, key=lambda x: x["probability"], reverse=True)
 
     def format(self, value: float, decimals: int = 3) -> str:
         if value is None:
@@ -162,10 +177,16 @@ class Buffer:
 
 buffer = Buffer()
 
+def create_id_from_frame(frame: ParrotTesterFrame) -> str:
+    """Create a unique ID from the frame's timestamp and winner name."""
+    return f"{frame.format(frame.ts, 3)} {frame.winner_name}" if frame else None
+
 class Capture:
     def __init__(self, detect_frame: ParrotTesterFrame):
+        self.id = create_id_from_frame(detect_frame)
         self.frames = buffer.get(detect_frame.ts)
         self.frames.append(detect_frame)
+        detect_frame.capture_id = self.id
         detect_frame_index = len(self.frames) - 1
         self._detect_frames = [(detect_frame, detect_frame_index)]
         self.pattern_names = set(detect_frame.pattern_names)
@@ -198,6 +219,7 @@ class Capture:
 
     def add_detect_frame(self, frame: ParrotTesterFrame):
         self.frames.append(frame)
+        frame.capture_id = self.id
         detect_frame_index = len(self.frames) - 1
         self._detect_frames.append((frame, detect_frame_index))
         self.pattern_names.update(frame.pattern_names)
@@ -252,7 +274,6 @@ class CaptureCollection:
                 cron.cancel(self.end_current_capture_job)
             self.end_current_capture_job = None
             last_capture = self.captures[-1] if self.captures else None
-            actions.user.ui_elements_set_state("last_capture", last_capture)
             actions.user.ui_elements_set_state("capture_updating", False)
 
             # double pop pause
@@ -260,6 +281,8 @@ class CaptureCollection:
                 actions.user.ui_elements_set_state("play", False)
                 actions.user.ui_elements_toggle_hints(True)
                 restore_patterns_paused()
+            else:
+                actions.user.ui_elements_set_state("last_capture", last_capture)
 
     def clear(self):
         self.captures = []
@@ -268,7 +291,52 @@ class CaptureCollection:
             cron.cancel(self.end_current_capture_job)
             self.end_current_capture_job = None
 
+class DetectionLog:
+    def __init__(self):
+        self.frames: list[ParrotTesterFrame] = []
+
+    def add(self, frame: ParrotTesterFrame):
+        self.frames.append(frame)
+
+    def clear(self):
+        self.frames = []
+
+    def id(self):
+        return create_id_from_frame(self.frames[0]) if self.frames else None
+
+class DetectionLogCollection:
+    def __init__(self):
+        self.collection: list[DetectionLog] = []
+        self.current_log: DetectionLog | None = None
+
+    def add(self, frame: ParrotTesterFrame):
+        if self.current_log is None or len(self.current_log.frames) >= 20:
+            self.current_log = DetectionLog()
+            self.collection.append(self.current_log)
+        self.current_log.add(frame)
+        frame.log_id = self.current_log.id()
+
+    def history(self):
+        return [log.id() for log in self.collection]
+
+    def current_log_frames(self) -> list[ParrotTesterFrame]:
+        """Get the frames of the current detection log."""
+        if self.current_log:
+            return list(self.current_log.frames)
+        return []
+
+    def get_log_by_id(self, log_id: str) -> DetectionLog | None:
+        for log in self.collection:
+            if log.id() == log_id:
+                return log
+        return None
+
+    def clear(self):
+        self.collection = []
+        self.current_log = None
+
 capture_collection = CaptureCollection()
+detection_log_collection = DetectionLogCollection()
 detected_log = []
 log_events = False
 
@@ -277,6 +345,7 @@ def reset_capture_collection():
     buffer.clear()
     capture_collection.clear()
     detected_log.clear()
+    detection_log_collection.clear()
     log_events = False
 
 def listen_log_events(enable: bool):
@@ -348,21 +417,32 @@ def wrap_pattern_match(parrot_delegate):
                 active.add(pattern.name)
                 throttles = pattern.get_throttles()
                 parrot_delegate.throttle_patterns(throttles, frame.ts)
-                detected_log.append(parrot_tester_frame)
+                detection_log_collection.add(parrot_tester_frame)
+                # detected_log.append(parrot_tester_frame)
 
         parrot_tester_frame.freeze()
         capture_collection.add(parrot_tester_frame, active)
 
         if active:
-            for name in active:
-                actions.user.ui_elements_highlight_briefly(f"pattern_{name}")
-            if log_events:
-                actions.user.ui_elements_set_state("detection_log", detected_log)
+            tab = actions.user.ui_elements_get_state("tab")
+            if tab == "patterns":
+                for name in active:
+                    actions.user.ui_elements_highlight_briefly(f"pattern_{name}")
+            elif tab == "detection_log":
+                # print("detection_log_collection", detection_log_collection.history())
+                # print("detection_log_collection.current_log.id", detection_log_collection.current_log.id() if detection_log_collection.current_log else None)
+                actions.user.ui_elements_set_state("detection_log_history", detection_log_collection.history())
+                actions.user.ui_elements_set_state("detection_current_log_id", detection_log_collection.current_log.id() if detection_log_collection.current_log else None)
+                actions.user.ui_elements_set_state("detection_current_log_frames", detection_log_collection.current_log_frames() if detection_log_collection.current_log else [])
 
         return active
     return wrapper
 
 original_pattern_match = None
+
+def get_current_log_by_id(log_id: str) -> DetectionLog | None:
+    """Get the current detection log by ID."""
+    return detection_log_collection.get_log_by_id(log_id)
 
 def parrot_tester_wrap_parrot_integration(parrot_delegate):
     global original_pattern_match

@@ -8,6 +8,8 @@ from ..constants import (
     ACCENT_COLOR,
     BORDER_COLOR,
     BG_INPUT,
+    GRAY_SOFT,
+    BORDER_COLOR_LIGHTER,
     GRACE_COLOR,
 )
 
@@ -42,6 +44,19 @@ def rect_color(color, size=20, **props):
             rect(x=0, y=0, width=24, height=24, fill=color)
         ]
     ]
+
+def subtitle(text_value):
+    text = actions.user.ui_elements("text")
+    return text(
+        text_value,
+        margin=8,
+        padding_top=6,
+        padding_bottom=8,
+        border_bottom=1,
+        color=GRAY_SOFT,
+        border_color=BORDER_COLOR_LIGHTER,
+        min_width=320
+    )
 
 def number(value, **kwargs):
     text = actions.user.ui_elements("text")
@@ -80,13 +95,14 @@ def power_ratio_bar(power: float, patterns: list, power_threshold: float = None)
 
     return div(position="relative", flex_direction="row", width=bar_width, background_color="555555", height=9)[
         *[div(width=int(pattern["probability"] * bar_width), background_color=pattern["color"]) for pattern in patterns],
-        div(position="absolute", left=power_threshold_left - 1.5, width=1.5, top=0, bottom=0, background_color="191B1FCC") if power_threshold else None,
+        div(position="absolute", left=power_threshold_left - 1.5, width=1.5, top=0, bottom=0, background_color="#920000") if power_threshold else None,
     ]
 
 def table_controls():
     div, text, icon, button, checkbox, style = actions.user.ui_elements(["div", "text", "icon", "button", "checkbox", "style"])
     state = actions.user.ui_elements("state")
     double_pop_pause, set_double_pop_pause = state.use("double_pop_pause", True)
+    disable_actions, set_disable_actions = state.use("disable_actions", False)
 
     checkbox_props = {
         "background_color": BG_INPUT,
@@ -97,6 +113,10 @@ def table_controls():
 
     return div(flex_direction="row", gap=24, margin_right=8)[
         div(flex_direction="row", gap=8, align_items="center")[
+            checkbox(checkbox_props, id="disable_actions", checked=disable_actions, on_change=lambda e: set_disable_actions(e.checked)),
+            text("Disable actions", for_id="disable_actions"),
+        ],
+        div(flex_direction="row", gap=8, align_items="center")[
             checkbox(checkbox_props, id="double_pop_pause", checked=double_pop_pause, on_change=lambda e: set_double_pop_pause(e.checked)),
             text("Double pop to pause", for_id="double_pop_pause"),
         ],
@@ -104,10 +124,10 @@ def table_controls():
             checkbox(checkbox_props, id="show_formants", on_change=lambda e: state.set("show_formants", e.checked)),
             text("Show F0, F1, F2", for_id="show_formants"),
         ],
-        div(flex_direction="row", gap=8, align_items="center")[
-            checkbox(checkbox_props, id="debug_mode", on_change=lambda e: state.set("debug_mode", e.checked)),
-            text("Debug mode", for_id="debug_mode"),
-        ],
+        # div(flex_direction="row", gap=8, align_items="center")[
+        #     checkbox(checkbox_props, id="debug_mode", on_change=lambda e: state.set("debug_mode", e.checked)),
+        #     text("Debug mode", for_id="debug_mode"),
+        # ],
         # button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
         #     text("Capture time"),
         #     icon("chevron_down", size=14),
@@ -141,6 +161,7 @@ def pattern(props):
 
     pattern_data = get_pattern_json(pattern_name)
     pattern_color = get_pattern_color(pattern_name)
+    # print(f"Pattern: {pattern_name}, Color: {pattern_color}, Data: {pattern_data}")
 
     style({
         "th": {
