@@ -2,6 +2,7 @@ from talon import actions
 from ..components import (
     legend,
     number,
+    number_threshold,
     status_cell,
     power_ratio_bar,
     table_controls,
@@ -18,6 +19,7 @@ from ...constants import (
 )
 from ...parrot_integration_wrapper import (
     get_current_log_by_id,
+    get_pattern_threshold_value,
 )
 
 def table_log():
@@ -27,20 +29,7 @@ def table_log():
     detection_current_log_id = state.get("detection_current_log_id", None)
     detection_current_log_frames = state.get("detection_current_log_frames", [])
     show_formants = state.get("show_formants", False)
-
-    # log = get_current_log_by_id(detection_current_log_id)
-    # print("Current detection log ID:", detection_current_log_id)
-    # print("Current detection log:", log)
-    # print("Current detection log frames:", detection_current_log_frames)
-    # frames = log.frames if log else []
-
-    # def on_mount(e):
-    #     print("Mounting detection log table")
-
-    # def on_unmount(e):
-    #     print("Unmounting detection log table")
-
-    # effect(on_mount, on_unmount, [])
+    show_thresholds = state.get("show_thresholds", True)
 
     style({
         "th": {
@@ -66,7 +55,9 @@ def table_log():
             th()[text("Pattern", color=SECONDARY_COLOR)],
             # th()[text("Sounds", color=SECONDARY_COLOR)],
             th(align_items="flex_end")[text("Power", color=SECONDARY_COLOR)],
+            th(align_items="flex_end")[text(">power", color=SECONDARY_COLOR)] if show_thresholds else None,
             th(align_items="flex_end")[text("Prob.", color=SECONDARY_COLOR)],
+            th(align_items="flex_end")[text(">prob.", color=SECONDARY_COLOR)] if show_thresholds else None,
             *[
                 th(align_items="flex_end", justify_content="center")[
                     text("F0", color=SECONDARY_COLOR),
@@ -95,10 +86,14 @@ def table_log():
                 # td(align_items="flex_start")[div(gap=8)[
                 #     *[text(", ".join(p["sounds"])) for p in frame.patterns]
                 # ]],
-                td()[number(frame.format(frame.power, 2))],
+                td(align_items="flex_end")[number(frame.format(frame.power, 2))],
                 td(align_items="flex_end")[
-                    number(frame.format(frame.winner["probability"], 4))
-                ],
+                    number(get_pattern_threshold_value(frame.winner["name"], ">power"))
+                ] if show_thresholds else None,
+                td(align_items="flex_end")[number(frame.format(frame.winner["probability"], 4))],
+                td(align_items="flex_end")[
+                    number(get_pattern_threshold_value(frame.winner["name"], ">probability"))
+                ] if show_thresholds else None,
                 *[
                     td(align_items="flex_end", justify_content="center")[
                         number(str(round(frame.f0))),
@@ -170,9 +165,6 @@ def page_detection_log():
                 ],
                 div(position="relative", flex=1)[
                     component(table_log),
-                    # div(position="absolute", top=0, right=0)[
-                    #     text("Updating...", font_size=14, padding=2)
-                    # ] if capture_updating else None,
                 ],
                 div(
                     position="absolute",

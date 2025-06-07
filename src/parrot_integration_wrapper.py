@@ -189,7 +189,9 @@ class Capture:
         detect_frame.capture_id = self.id
         detect_frame_index = len(self.frames) - 1
         self._detect_frames = [(detect_frame, detect_frame_index)]
-        self.pattern_names = set(detect_frame.pattern_names)
+        self.pattern_names = set()
+        for frame in self.frames:
+            self.pattern_names.update(frame.pattern_names)
 
     @property
     def detect_frames(self):
@@ -548,6 +550,13 @@ def get_pattern_json(name: str = None):
     if patterns_json and name is not None:
         return patterns_json.get(name, {})
     return patterns_json
+
+def get_pattern_threshold_value(name: str, key: str):
+    """Get a specific value from the pattern JSON."""
+    global patterns_json
+    if patterns_json and name in patterns_json:
+        return patterns_json[name].get("threshold", {}).get(key, None)
+    return None
 
 def get_pattern_color(name: str):
     try:

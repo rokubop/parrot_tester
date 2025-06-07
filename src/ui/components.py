@@ -4,13 +4,14 @@ from ..parrot_integration_wrapper import (
     get_pattern_color,
 )
 from ..constants import (
-    ACTIVE_COLOR,
     ACCENT_COLOR,
-    BORDER_COLOR,
+    ACTIVE_COLOR,
     BG_INPUT,
-    GRAY_SOFT,
     BORDER_COLOR_LIGHTER,
+    BORDER_COLOR,
     GRACE_COLOR,
+    GRAY_SOFT,
+    SECONDARY_COLOR,
 )
 
 def legend():
@@ -62,6 +63,10 @@ def number(value, **kwargs):
     text = actions.user.ui_elements("text")
     return text(value, font_family="consolas", **kwargs)
 
+def number_threshold(value, **kwargs):
+    text = actions.user.ui_elements("text")
+    return text(f">{value}", font_family="consolas", color=SECONDARY_COLOR, **kwargs)
+
 def status_cell(status: str, graceperiod: bool = False):
     div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
     svg, circle = actions.user.ui_elements_svg(["svg", "circle"])
@@ -101,8 +106,11 @@ def power_ratio_bar(power: float, patterns: list, power_threshold: float = None)
 def table_controls():
     div, text, icon, button, checkbox, style = actions.user.ui_elements(["div", "text", "icon", "button", "checkbox", "style"])
     state = actions.user.ui_elements("state")
-    double_pop_pause, set_double_pop_pause = state.use("double_pop_pause", True)
+    double_pop_pause, set_double_pop_pause = state.use("double_pop_pause", False)
     disable_actions, set_disable_actions = state.use("disable_actions", False)
+    show_formants, set_show_formants = state.use("show_formants", False)
+    show_thresholds, set_show_thresholds = state.use("show_thresholds", False)
+    tab = state.get("tab")
 
     checkbox_props = {
         "background_color": BG_INPUT,
@@ -121,9 +129,13 @@ def table_controls():
             text("Double pop to pause", for_id="double_pop_pause"),
         ],
         div(flex_direction="row", gap=8, align_items="center")[
-            checkbox(checkbox_props, id="show_formants", on_change=lambda e: state.set("show_formants", e.checked)),
+            checkbox(checkbox_props, id="show_formants", checked=show_formants, on_change=lambda e: set_show_formants(e.checked)),
             text("Show F0, F1, F2", for_id="show_formants"),
         ],
+        div(flex_direction="row", gap=8, align_items="center")[
+            checkbox(checkbox_props, id="show_thresholds", checked=show_thresholds, on_change=lambda e: set_show_thresholds(e.checked)),
+            text("Show thresholds", for_id="show_thresholds"),
+        ] if tab == "detection_log" else None,
         # div(flex_direction="row", gap=8, align_items="center")[
         #     checkbox(checkbox_props, id="debug_mode", on_change=lambda e: state.set("debug_mode", e.checked)),
         #     text("Debug mode", for_id="debug_mode"),
@@ -194,6 +206,8 @@ def pattern(props):
 
     pattern_props = {
         "padding": 16,
+        "padding_top": 12,
+        "padding_bottom": 12,
         "flex_direction": "column",
         "gap": 8,
     }
@@ -201,32 +215,32 @@ def pattern(props):
     if highlight_when_active:
         pattern_props["id"] = f"pattern_{pattern_name}"
 
-    if small:
-        pattern_props["padding_bottom"] = 8
-        pattern_props["padding_top"] = 8
-    else:
-        pattern_props["border_bottom"] = 1
-        pattern_props["border_color"] = BORDER_COLOR
+    # if small:
+    #     pattern_props["padding_bottom"] = 8
+    #     pattern_props["padding_top"] = 8
+    # else:
+    #     pattern_props["border_bottom"] = 1
+    #     pattern_props["border_color"] = BORDER_COLOR
 
     if small:
         return div(pattern_props)[
             div(flex_direction="row", gap=8, align_items="center", justify_content="space_between")[
                 div(flex_direction="row", gap=8, align_items="center")[
-                    rect_color(pattern_color, size=12, opacity=0.5),
-                    text(pattern_name, font_size=14, opacity=0.5),
+                    rect_color(pattern_color, size=12),
+                    text(pattern_name, font_size=15),
                 ],
             ],
-            div(flex_direction="row", justify_content="center")[
+            div(flex_direction="row", border_left=1, border_color=BORDER_COLOR_LIGHTER)[
                 table()[
                     tr()[
                         td(position="relative")[
-                            text(">power", font_size=14, color=ACCENT_COLOR, opacity=0.5),
+                            text(">power", font_size=14, color=ACCENT_COLOR),
                         ],
                         td(margin_right=16, position="relative")[
-                            number(pattern_data.get("threshold", {}).get(">power", "0"), opacity=0.5),
+                            number(pattern_data.get("threshold", {}).get(">power", "0")),
                         ],
-                        td()[text(">probability", font_size=14, color=ACCENT_COLOR, opacity=0.5)],
-                        td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"), opacity=0.5)],
+                        td()[text(">probability", font_size=14, color=ACCENT_COLOR)],
+                        td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"))],
                     ],
                 ],
             ],
@@ -236,13 +250,13 @@ def pattern(props):
         div(flex_direction="row", gap=8, align_items="center", padding_bottom=8, justify_content="space_between")[
             div(flex_direction="row", gap=8, align_items="center")[
                 rect_color(pattern_color, size=14),
-                text(pattern_name, font_size=20),
+                text(pattern_name, font_size=18),
             ],
             # button(on_click=lambda e: state.set("edit_pattern", pattern_name))[
             #     icon("edit", size=16, color=ACCENT_COLOR, stroke_width=3),
             # ] if edit else None,
         ],
-        div(justify_content="center", align_items="flex_start")[
+        div(align_items="flex_start", border_left=1, border_color=BORDER_COLOR_LIGHTER)[
             div(flex_direction="row", gap=8, margin_left=15, align_items="center")[
                 text("sounds", font_size=14, color=ACCENT_COLOR),
                 text(",".join(pattern_data.get("sounds", [])), font_size=14),

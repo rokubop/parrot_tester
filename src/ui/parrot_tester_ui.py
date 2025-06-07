@@ -43,7 +43,7 @@ def tabs():
                 background_color=ACTIVE_COLOR,
                 height=3,
                 width="100%",
-                border_radius=2
+                border_radius=2,
             ) if tab_state == tab else None
         ] for tab in tab_id_to_page.keys()]
     ]

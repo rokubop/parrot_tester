@@ -83,6 +83,7 @@ def table_frames():
             "padding_right": 12,
             "align_items": "flex_end",
             "border_bottom": 1,
+            "justify_content": "center",
         },
     })
 
@@ -119,14 +120,14 @@ def table_frames():
             tr()[
                 td()[number(str(frame.id))],
                 td()[number(frame.format(frame.ts_delta, 3))],
-                td(align_items="flex_start")[div(gap=8, min_width=60)[
+                td(align_items="flex_start")[div(gap=10, min_width=60)[
                     *[text(p["name"]) for p in frame.patterns]
                 ]],
                 # td(align_items="flex_start")[div(gap=8)[
                 #     *[text(", ".join(p["sounds"])) for p in frame.patterns]
                 # ]],
                 td()[number(frame.format(frame.power, 2))],
-                td(align_items="flex_end")[div(gap=8)[
+                td(align_items="flex_end")[div(gap=10)[
                     *[number(frame.format(p["probability"], 4)) for p in frame.patterns]
                 ]],
                 *[
@@ -140,7 +141,7 @@ def table_frames():
                         number(str(round(frame.f2))),
                     ],
                 ] if show_formants else [],
-                td(align_items="center")[div(gap=8, align_items="center")[
+                td(align_items="center")[div(gap=10, align_items="center")[
                     *[status_cell(p['status'], p['graceperiod']) for p in frame.patterns]
                 ]],
                 td(align_items="flex_start", justify_content="center")[
