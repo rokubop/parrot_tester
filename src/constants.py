@@ -1,24 +1,24 @@
 PATTERN_COLORS = [
-    "00FF88",  # Neon Green
-    "FFA500",  # Vivid Orange
-    "00CFFF",  # Electric Cyan
-    "FF5C5C",  # Bright Red
-    "FFD700",  # Yellow-Gold
-    "A75CFF",  # Purple
-    "33FF57",  # Lime Green
-    "66B2FF",  # Sky Blue
-    "FF66CC",  # Hot Pink
-    "80FF00",  # Chartreuse
-    "FFAA33",  # Apricot
-    "FF4444",  # Strawberry Red
-    "33DDFF",  # Cyan-Teal
-    "FFB3FF",  # Light Magenta
-    "FFCC00",  # Warm Yellow
-    "99FF99",  # Soft Lime
-    "66FFFF",  # Ice Blue
-    "CC66FF",  # Orchid Purple
-    "FF9999",  # Light Red
-    "00FFFC"   # Neon Aqua
+    "#00FF88",
+    "#FFA500",
+    "#00CFFF",
+    "#FF5C5C",
+    "#FFD700",
+    "#A75CFF",
+    "#33FF57",
+    "#66B2FF",
+    "#FF66CC",
+    "#80FF00",
+    "#FFAA33",
+    "#FF4444",
+    "#33DDFF",
+    "#FFB3FF",
+    "#FFCC00",
+    "#99FF99",
+    "#66FFFF",
+    "#CC66FF",
+    "#FF9999",
+    "#00FFFC"
 ]
 
 ACTIVE_COLOR = "#3B71D9"

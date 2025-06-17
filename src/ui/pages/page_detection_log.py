@@ -20,6 +20,7 @@ from ...constants import (
 from ...parrot_integration_wrapper import (
     get_current_log_by_id,
     get_pattern_threshold_value,
+    populate_detection_log_state,
 )
 
 def table_log():
@@ -124,24 +125,20 @@ def page_detection_log():
     div, component, text, state, button = actions.user.ui_elements(
         ["div", "component", "text", "state", "button"]
     )
+    effect = actions.user.ui_elements("effect")
 
     detection_log_history = state.get("detection_log_history", [])
     # capture_updating = state.get("capture_updating", False)
     current_log_id, set_current_log_id = state.use("detection_current_log_id", None)
     # detection_log_id, set_detection_log_id = actions.user.ui_elements_state("detection_current_log_id", None)
+    # print("current_log_id:", current_log_id)
+    def on_mount(e):
+        populate_detection_log_state()
 
-    # Doesn't support components yet
-    # effect = actions.user.ui_elements("effect")
-    # def on_mount(e):
-    #     print("Mounting detection log page")
-
-    # def on_unmount(e):
-    #     print("Unmounting detection log page")
-
-    # effect(on_mount, on_unmount, [])
+    effect(on_mount, [])
 
     return div(background_color=BG_DARKEST, flex_direction="row", height=750)[
-        div(flex_direction="column", background_color=BG_GRAY, height=750, border_right=1, border_color=BORDER_COLOR)[
+        div(flex_direction="column", background_color=BG_GRAY, height=750, border_right=1, border_color=BORDER_COLOR, overflow_y="scroll")[
             subtitle("Detection Log History"),
             *[button(
                 margin=4,

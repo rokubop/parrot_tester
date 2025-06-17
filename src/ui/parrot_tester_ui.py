@@ -11,6 +11,7 @@ from .pages.page_patterns import page_patterns
 from .pages.page_stats import page_stats
 from .pages.page_pattern_edit import edit_page
 from .pages.page_settings import page_settings
+from .components import last_detection
 from ..constants import (
     ACTIVE_COLOR,
     BG_DARKEST,
@@ -121,6 +122,16 @@ def parrot_tester_toggle():
             parrot_tester_disable_and_exit()
             return
 
+def minimized_ui():
+    div = actions.user.ui_elements(["div"])
+
+    return div(flex_direction="row", align_items="center", justify_content="space_between", padding=8)[
+        last_detection(),
+        div(padding=8)[
+            play_button(),
+        ],
+    ]
+
 def parrot_tester_ui():
     window, div, screen, style, component = actions.user.ui_elements([
         "window", "div", "screen", "style", "component"
@@ -148,7 +159,15 @@ def parrot_tester_ui():
             background_color=BG_DARKEST,
             border_radius=8,
             border_width=1,
-            border_color=WINDOW_BORDER_COLOR
+            border_color=WINDOW_BORDER_COLOR,
+            on_minimize=lambda: state.set("minimized", True),
+            on_restore=lambda: state.set("minimized", False),
+            minimized_ui=minimized_ui,
+            minimized_style={
+                "position": "absolute",
+                "top": 100,
+                "right": 100
+            }
         )[
             edit_page() if edit_pattern else (
                 div(flex_direction="row", align_items="stretch", justify_content="space_between", border_bottom=1, border_color=BORDER_COLOR)[

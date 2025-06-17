@@ -14,6 +14,42 @@ from ..constants import (
     SECONDARY_COLOR,
 )
 
+def last_detection():
+    div, text, state = actions.user.ui_elements(["div", "text", "state"])
+    detection_current_log_frames = state.get("detection_current_log_frames", [])
+
+    last_frame = detection_current_log_frames[-1] if detection_current_log_frames else None
+
+    if not last_frame or not last_frame.winner:
+        return div(flex_direction="column", gap=12, width=200, align_items="center", padding=8)[
+            text("-", font_size=30, color=GRAY_SOFT)
+        ]
+
+    return div(flex_direction="column", gap=12, width=200, align_items="center", padding=8)[
+        text(
+            last_frame.winner["name"] if last_frame else "-",
+            font_size=30,
+            color=ACCENT_COLOR
+        ),
+        div(flex_direction="row", gap=8, align_items="center")[
+            text(
+                last_frame.format(last_frame.power, 2) if last_frame else "",
+                font_size=14,
+            ),
+            text("/"),
+            text(
+                last_frame.format(last_frame.winner["probability"], 3) if last_frame else "",
+                font_size=14,
+            ),
+        ],
+        power_ratio_bar(
+            last_frame.power,
+            last_frame.patterns,
+            last_frame.winner_grace_power_threshold if last_frame.grace_detected else \
+                last_frame.winner_power_threshold if last_frame.detected else None
+        )
+    ]
+
 def legend():
     div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
 

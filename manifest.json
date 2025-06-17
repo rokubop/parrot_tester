@@ -1,0 +1,26 @@
+{
+  "name": "parrot_tester",
+  "description": "Visual tool for testing parrot integration with Talon",
+  "version": "1.0.0",
+  "contributes": {
+    "tags": ["user.parrot_tester"],
+    "actions": [
+      "user.parrot_tester_restore_parrot_integration",
+      "user.parrot_tester_toggle",
+      "user.parrot_tester_wrap_parrot_integration"
+    ]
+  },
+  "depends": {
+    "actions": [
+      "user.ui_elements",
+      "user.ui_elements_get_state",
+      "user.ui_elements_hide_all",
+      "user.ui_elements_highlight_briefly",
+      "user.ui_elements_is_active",
+      "user.ui_elements_set_state",
+      "user.ui_elements_show",
+      "user.ui_elements_svg",
+      "user.ui_elements_toggle_hints"
+    ]
+  }
+}

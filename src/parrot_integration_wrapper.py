@@ -264,7 +264,7 @@ class CaptureCollection:
         elif self.current_capture is not None:
             self.current_capture.add_frame(frame)
 
-        if new_capture:
+        if new_capture and actions.user.ui_elements_get_state("tab") == "frames":
             actions.user.ui_elements_set_state("capture_updating", True)
 
     def end_current_capture(self):
@@ -276,14 +276,16 @@ class CaptureCollection:
                 cron.cancel(self.end_current_capture_job)
             self.end_current_capture_job = None
             last_capture = self.captures[-1] if self.captures else None
-            actions.user.ui_elements_set_state("capture_updating", False)
+            tab = actions.user.ui_elements_get_state("tab")
+            if tab == "frames":
+                actions.user.ui_elements_set_state("capture_updating", False)
 
             # double pop pause
             if actions.user.ui_elements_get_state("double_pop_pause") and last_capture and last_capture.detected_two_pops():
                 actions.user.ui_elements_set_state("play", False)
                 actions.user.ui_elements_toggle_hints(True)
                 restore_patterns_paused()
-            else:
+            elif tab == "frames":
                 actions.user.ui_elements_set_state("last_capture", last_capture)
 
     def clear(self):
@@ -430,15 +432,16 @@ def wrap_pattern_match(parrot_delegate):
             if tab == "patterns":
                 for name in active:
                     actions.user.ui_elements_highlight_briefly(f"pattern_{name}")
-            elif tab == "detection_log":
-                # print("detection_log_collection", detection_log_collection.history())
-                # print("detection_log_collection.current_log.id", detection_log_collection.current_log.id() if detection_log_collection.current_log else None)
-                actions.user.ui_elements_set_state("detection_log_history", detection_log_collection.history())
-                actions.user.ui_elements_set_state("detection_current_log_id", detection_log_collection.current_log.id() if detection_log_collection.current_log else None)
-                actions.user.ui_elements_set_state("detection_current_log_frames", detection_log_collection.current_log_frames() if detection_log_collection.current_log else [])
+            elif tab == "detection_log" or actions.user.ui_elements_get_state("minimized"):
+                populate_detection_log_state()
 
         return active
     return wrapper
+
+def populate_detection_log_state():
+    actions.user.ui_elements_set_state("detection_log_history", detection_log_collection.history())
+    actions.user.ui_elements_set_state("detection_current_log_id", detection_log_collection.current_log.id() if detection_log_collection.current_log else None)
+    actions.user.ui_elements_set_state("detection_current_log_frames", detection_log_collection.current_log_frames() if detection_log_collection.current_log else [])
 
 original_pattern_match = None
 
@@ -579,15 +582,9 @@ def parrot_tester_initialize():
     current_rel = current.relative_to(user_root)
     target_rel = target.relative_to(user_root).with_suffix("")  # drop .py
 
-    # print(f"current: {current}, target: {target}, user_root: {user_root}")
-    # print(f"patterns_py_path: {patterns_py_path}")
     patterns_json = load_patterns(patterns_py_path)
 
-    # print("TALON_USER:", TALON_USER)
-    # print("current_path:", current_path)
-    # print("parrot_integration_path:", parrot_integration_path)
     import_path = build_relative_import_path(current_rel, target_rel)
-    # print(import_path)
     generate_parrot_integration_hook(import_path, current_path)
     actions.user.parrot_tester_wrap_parrot_integration()
 
