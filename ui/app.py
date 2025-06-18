@@ -25,7 +25,7 @@ TAB_ID_TO_PAGE = {
     "detection_log": page_detection_log,
     "activity": page_activity,
     "patterns": page_patterns,
-    # "stats": page_stats,
+    "stats": page_stats,
     # "settings": page_settings,
     "about": page_about,
 }

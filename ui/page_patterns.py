@@ -6,12 +6,12 @@ from .components import (
     pattern
 )
 from ..parrot_integration_wrapper import (
-    get_pattern_json,
+    get_patterns_json,
 )
 
 def page_patterns():
     div, component, table, tr, td, style = actions.user.ui_elements(["div", "component", "table", "tr", "td", "style"])
-    patterns = get_pattern_json()
+    patterns = get_patterns_json()
     pattern_items = list(patterns.items())
     pattern_groups = [pattern_items[i:i + 4] for i in range(0, len(pattern_items), 4)]
 

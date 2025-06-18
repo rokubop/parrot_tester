@@ -50,7 +50,7 @@ def build_relative_import_path(current_file: Path, target_file: Path) -> str:
     if not all(part.isidentifier() for part in target_file.parts):
         raise ValueError(f"Invalid import path - folder/file names must be valid Python identifiers: {target_file}")
 
-    up_levels = len(current_file.parts) - 1
+    up_levels = len(current_file.parts)
     dot_prefix = "." * up_levels if up_levels > 0 else "."
     target_module = ".".join(target_file.parts)
 
@@ -129,14 +129,14 @@ class ParrotTesterFrame:
     @property
     def winner_power_threshold(self):
         name = self.winner_name
-        patterns_json = get_patterns_json()
-        return patterns_json.get(name, {}).get("threshold", {}).get(">power", None)
+        global_patterns = get_patterns_json()
+        return global_patterns.get(name, {}).get("threshold", {}).get(">power", None)
 
     @property
     def winner_grace_power_threshold(self):
         name = self.winner_name
-        patterns_json = get_patterns_json()
-        return patterns_json.get(name, {}).get("grace_threshold", {}).get(">power", None)
+        global_patterns = get_patterns_json()
+        return global_patterns.get(name, {}).get("grace_threshold", {}).get(">power", None)
 
     @property
     def winner_probability(self):
@@ -337,52 +337,175 @@ class DetectionLogCollection:
 
 class PatternsStats:
     def __init__(self):
-        self.stats: dict[str, int] = {
-            # pattern_name:
-              # count of detections
-              # power
-                # min
-                # average
-                # max
-              # probability
-                # min
-                # average
-                # max
-              # f0
-                # min
-                # average
-                # max
-              # f1
-                # min
-                # average
-                # max
-              # f2
-                # min
-                # average
-                # max
-        }
+        self.stats = {}
+        self.total_frames = {}
+        # Initialize stats structure from patterns in get_patterns_json
+        global_patterns = get_patterns_json()
+        print("Initializing PatternsStats with patterns:", global_patterns.keys())
+        for pattern_name in global_patterns.keys():
+            self._initialize_pattern_stats(pattern_name)
 
-    def generate(self, log_collection: DetectionLogCollection):
-        # a log collection has a list of logs
-        # each log has a list of frames
-        # each frame has a winner which is what we want to aggregate
-        self.stats.clear()
+    def _initialize_pattern_stats(self, pattern_name):
+        """Initialize statistics structure for a new pattern."""
+        if pattern_name not in self.stats:
+            self.stats[pattern_name] = {
+                "count": 0,
+                "power": {"min": float('inf'), "sum": 0, "max": float('-inf')},
+                "probability": {"min": float('inf'), "sum": 0, "max": float('-inf')},
+                "f0": {"min": float('inf'), "sum": 0, "max": float('-inf')},
+                "f1": {"min": float('inf'), "sum": 0, "max": float('-inf')},
+                "f2": {"min": float('inf'), "sum": 0, "max": float('-inf')}
+            }
+            self.total_frames[pattern_name] = 0
+
+    def _update_metric(self, pattern_name, metric_name, value):
+        """Update min, sum, and max for a given metric."""
+        if value is None:
+            return
+
+        stats = self.stats[pattern_name][metric_name]
+        stats["min"] = min(stats["min"], value)
+        stats["sum"] += value
+        stats["max"] = max(stats["max"], value)
+
+    def add_frame(self, frame):
+        """Add a single frame's statistics."""
+        if not frame.patterns:
+            return
+
+        # Update stats for the winning pattern (most confident detection)
+        winner = frame.winner
+        if not winner:
+            return
+
+        pattern_name = winner.get("name")
+        if not pattern_name:
+            return
+
+        self._initialize_pattern_stats(pattern_name)
+
+        # Update counts
+        self.stats[pattern_name]["count"] += 1
+        self.total_frames[pattern_name] += 1
+
+        # Update metrics
+        self._update_metric(pattern_name, "power", frame.power)
+        self._update_metric(pattern_name, "probability", winner.get("probability"))
+        self._update_metric(pattern_name, "f0", frame.f0)
+        self._update_metric(pattern_name, "f1", frame.f1)
+        self._update_metric(pattern_name, "f2", frame.f2)
+
+    def generate(self, log_collection):
+        """Generate statistics from a log collection."""
+        # Reset stats while keeping the structure
+        print("log_collection.collection:", log_collection.collection)
+        print("log_collection.current_log:", log_collection.current_log)
+        for pattern in list(self.stats.keys()):
+            self.stats[pattern]["count"] = 0
+            for metric in ["power", "probability", "f0", "f1", "f2"]:
+                self.stats[pattern][metric]["min"] = float('inf')
+                self.stats[pattern][metric]["sum"] = 0
+                self.stats[pattern][metric]["max"] = float('-inf')
+        self.total_frames = {pattern: 0 for pattern in self.stats}
+
+        # Process all frames
         for log in log_collection.collection:
             for frame in log.frames:
-                winner = frame.winner
-                #
+                print("adding frame to stats:", frame.id, frame.ts, frame.winner_name)
+                self.add_frame(frame)
+
+        return self.get_stats()
+
+    def get_stats(self):
+        """Get the current statistics with averages calculated."""
+        result = {}
+        for pattern_name, stats in self.stats.items():
+            if stats["count"] > 0:
+                result[pattern_name] = {
+                    "name": pattern_name,
+                    "count": stats["count"],
+                    "power": {
+                        "min": stats["power"]["min"] if stats["power"]["min"] != float('inf') else 0,
+                        "average": stats["power"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                        "max": stats["power"]["max"] if stats["power"]["max"] != float('-inf') else 0
+                    },
+                    "probability": {
+                        "min": stats["probability"]["min"] if stats["probability"]["min"] != float('inf') else 0,
+                        "average": stats["probability"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                        "max": stats["probability"]["max"] if stats["probability"]["max"] != float('-inf') else 0
+                    },
+                    "f0": {
+                        "min": stats["f0"]["min"] if stats["f0"]["min"] != float('inf') else 0,
+                        "average": stats["f0"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                        "max": stats["f0"]["max"] if stats["f0"]["max"] != float('-inf') else 0
+                    },
+                    "f1": {
+                        "min": stats["f1"]["min"] if stats["f1"]["min"] != float('inf') else 0,
+                        "average": stats["f1"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                        "max": stats["f1"]["max"] if stats["f1"]["max"] != float('-inf') else 0
+                    },
+                    "f2": {
+                        "min": stats["f2"]["min"] if stats["f2"]["min"] != float('inf') else 0,
+                        "average": stats["f2"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                        "max": stats["f2"]["max"] if stats["f2"]["max"] != float('-inf') else 0
+                    }
+                }
+
+        return result
+
+    def clear(self):
+        """Clear all statistics."""
+        self.stats = {}
+        self.total_frames = {}
+        # Re-initialize with patterns from get_patterns_json
+        global_patterns = get_patterns_json()
+        for pattern_name in global_patterns:
+            self._initialize_pattern_stats(pattern_name)
 
 capture_collection = CaptureCollection()
 detection_log_collection = DetectionLogCollection()
+patterns_stats = None
 detected_log = []
 log_events = False
 
+def init_stats():
+    """Initialize the patterns statistics."""
+    global patterns_stats, detection_log_collection
+    if not patterns_stats:
+        patterns_stats = PatternsStats()
+    s = patterns_stats.generate(detection_log_collection)
+    print("Generated patterns stats:", s)
+    actions.user.ui_elements_set_state("patterns_stats", s)
+
+def add_frame_to_stats(frame: ParrotTesterFrame):
+    """Add a frame to the patterns statistics."""
+    global patterns_stats
+    if patterns_stats is None:
+        init_stats()
+    patterns_stats.add_frame(frame)
+
+def get_stats():
+    """Get the current patterns statistics."""
+    global patterns_stats
+    if patterns_stats is None:
+        init_stats()
+    return patterns_stats.get_stats()
+
+def reset_stats():
+    """Reset the patterns statistics."""
+    global patterns_stats
+    if patterns_stats:
+        patterns_stats.clear()
+
 def reset_capture_collection():
-    global log_events
+    global log_events, patterns_stats
     buffer.clear()
     capture_collection.clear()
     detected_log.clear()
     detection_log_collection.clear()
+    if patterns_stats:
+        patterns_stats.clear()
+        patterns_stats = None
     log_events = False
 
 def listen_log_events(enable: bool):
@@ -548,22 +671,22 @@ def create_auto_generated_folder(generated_folder: Path):
 
 def get_pattern_json(name: str = None):
     """Get the pattern JSON for a specific name."""
-    patterns_json = get_patterns_json()
-    if patterns_json and name is not None:
-        return patterns_json.get(name, {})
-    return patterns_json
+    global_patterns = get_patterns_json()
+    if global_patterns:
+        return global_patterns.get(name, {})
+    return {}
 
 def get_pattern_threshold_value(name: str, key: str):
     """Get a specific value from the pattern JSON."""
-    patterns_json = get_patterns_json()
-    if patterns_json and name in patterns_json:
-        return patterns_json[name].get("threshold", {}).get(key, None)
+    global_patterns = get_patterns_json()
+    if global_patterns and name in global_patterns:
+        return global_patterns[name].get("threshold", {}).get(key, None)
     return None
 
 def get_pattern_color(name: str):
-    patterns_json = get_patterns_json()
+    global_patterns = get_patterns_json()
     try:
-        index = list(patterns_json.keys()).index(name)
+        index = list(global_patterns.keys()).index(name)
         return get_color(index)
     except:
         return "#FFFFFF"
