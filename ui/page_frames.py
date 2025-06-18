@@ -22,21 +22,8 @@ def detected_patterns():
     div, component, state, text = actions.user.ui_elements(["div", "component", "state", "text"])
     state = actions.user.ui_elements("state")
     last_capture = state.get("last_capture", None)
-    # frames = last_capture.detect_frames if last_capture else []
     patterns = last_capture.detected_pattern_names if last_capture else []
     other_patterns = last_capture.other_pattern_names if last_capture else []
-    # print("detected_patterns", patterns)
-    # patterns = []
-    # seen = set()
-
-    # for frame in frames:
-    #     for p in frame.patterns:
-    #         name = p["name"]
-    #         if name not in seen:
-    #             patterns.append(name)
-    #             seen.add(name)
-
-
 
     return div(height="100%")[
         subtitle("Detected patterns"),
@@ -157,7 +144,7 @@ def table_frames():
     ]
 
 def page_frames():
-    div, component, text, effect = actions.user.ui_elements(["div", "component", "text", "effect"])
+    div, component, text = actions.user.ui_elements(["div", "component", "text"])
 
     state = actions.user.ui_elements("state")
     capture_updating = state.get("capture_updating", False)

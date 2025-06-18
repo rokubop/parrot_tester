@@ -5,11 +5,12 @@ from .colors import (
     SECONDARY_COLOR,
     ACCENT_COLOR,
     BORDER_COLOR,
+    BG_DARKEST,
 )
 
 def get_version():
     manifest_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..", "manifest.json")
+        os.path.join(os.path.dirname(__file__), "..", "..", "manifest.json")
     )
     try:
         with open(manifest_path, "r", encoding="utf-8") as f:
@@ -33,7 +34,7 @@ def page_about():
     })
 
     return div(flex_direction="row", padding=16, gap=16, height="100%")[
-        div(background_color="191B1F", flex=1, border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
+        div(background_color=BG_DARKEST, flex=1, border_radius=4, padding=16, border_width=1, border_color=BORDER_COLOR)[
             table()[
                 tr()[
                     td()[text("Parrot Tester version", color=SECONDARY_COLOR)],

@@ -11,13 +11,9 @@ from ..parrot_integration_wrapper import (
 
 def page_patterns():
     div, component, table, tr, td, style = actions.user.ui_elements(["div", "component", "table", "tr", "td", "style"])
-    text = actions.user.ui_elements("text")
     patterns = get_pattern_json()
-
-    pattern_items = list(patterns.items())  # (name, pattern)
+    pattern_items = list(patterns.items())
     pattern_groups = [pattern_items[i:i + 4] for i in range(0, len(pattern_items), 4)]
-
-    # print("pattern_items", pattern_items)
 
     style({
         "td": {
@@ -35,7 +31,7 @@ def page_patterns():
                             "highlight_when_active": True,
                         }),
                     ]
-                ] for name, pattern_data in group]
+                ] for name in group]
             ] for group in pattern_groups]
         ]
     ]

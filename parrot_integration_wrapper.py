@@ -47,8 +47,6 @@ def load_patterns(path: Path) -> dict:
         return {}
 
 def build_relative_import_path(current_file: Path, target_file: Path) -> str:
-    # Root of all Talon scripts
-    # user_root = Path.home() / ".talon" / "user"
     if not all(part.isidentifier() for part in target_file.parts):
         raise ValueError(f"Invalid import path - folder/file names must be valid Python identifiers: {target_file}")
 
@@ -117,7 +115,6 @@ class ParrotTesterFrame:
                 -x["probability"]                   # then by probability descending
             )
         )
-        # self.patterns = sorted(self.patterns, key=lambda x: x["probability"], reverse=True)
 
     def format(self, value: float, decimals: int = 3) -> str:
         if value is None:
@@ -424,7 +421,6 @@ def wrap_pattern_match(parrot_delegate):
                 throttles = pattern.get_throttles()
                 parrot_delegate.throttle_patterns(throttles, frame.ts)
                 detection_log_collection.add(parrot_tester_frame)
-                # detected_log.append(parrot_tester_frame)
 
         parrot_tester_frame.freeze()
         capture_collection.add(parrot_tester_frame, active)
@@ -475,19 +471,6 @@ def parrot_tester_restore_parrot_integration(parrot_delegate):
 
     reset_capture_collection()
     print("parrot_integration.py restored")
-
-# def parrot_tester_restore_parrot_integration(parrot_delegate, original_file: str):
-#     """Restore pattern patterns."""
-#     global original_pattern_match
-#     if original_pattern_match is not None:
-#         parrot_delegate.pattern_match = original_pattern_match
-#         original_pattern_match = None
-
-#     with open(original_file, "r", encoding="utf-8") as f:
-#         parrot_delegate.set_patterns(json.load(f))
-#         print("Restored pattern_integration.py")
-
-#     reset_capture_collection()
 
 def generate_parrot_integration_hook(import_path: str, current_file: Path):
     target_dir = current_file.parent

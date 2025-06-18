@@ -5,13 +5,14 @@ from ..parrot_integration_wrapper import (
 )
 from .colors import (
     ACCENT_COLOR,
-    ACTIVE_COLOR,
     BG_INPUT,
     BORDER_COLOR_LIGHTER,
     BORDER_COLOR,
+    DETECTED_COLOR,
     GRACE_COLOR,
     GRAY_SOFT,
     SECONDARY_COLOR,
+    THROTTLE_COLOR,
 )
 
 def last_detection(size="small"):
@@ -104,26 +105,16 @@ def number_threshold(value, **kwargs):
     return text(f">{value}", font_family="consolas", color=SECONDARY_COLOR, **kwargs)
 
 def status_cell(status: str, graceperiod: bool = False):
-    div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
-    svg, circle = actions.user.ui_elements_svg(["svg", "circle"])
+    text, icon = actions.user.ui_elements(["text", "icon"])
 
     s = None
 
     if status =="grace_detected":
         s = tilda_icon()
-        # s = div(position="relative")[
-        #     icon("check", size=16, color="#73BF69", stroke_width=3),
-        #     div(position="absolute", right="100%", height="100%")[
-        #         tilda_icon(),
-        #         # svg(size=16)[
-        #         #     circle(cx=12, cy=12, r=4, fill="#48CEFF"),
-        #         # ]
-        #     ]
-        # ]
     elif status == "detected":
-        s = icon("check", size=16, color="#73BF69", stroke_width=3)
+        s = icon("check", size=16, color=DETECTED_COLOR, stroke_width=3)
     elif status == "throttled":
-        s = icon("clock", size=16, color="#FFCC00")
+        s = icon("clock", size=16, color=THROTTLE_COLOR)
     return s if s else text("-", color="#999999")
 
 def power_ratio_bar(power: float, patterns: list, power_threshold: float = None):
@@ -209,7 +200,6 @@ def pattern(props):
 
     pattern_data = get_pattern_json(pattern_name)
     pattern_color = get_pattern_color(pattern_name)
-    # print(f"Pattern: {pattern_name}, Color: {pattern_color}, Data: {pattern_data}")
 
     style({
         "th": {
@@ -250,13 +240,6 @@ def pattern(props):
 
     if highlight_when_active:
         pattern_props["id"] = f"pattern_{pattern_name}"
-
-    # if small:
-    #     pattern_props["padding_bottom"] = 8
-    #     pattern_props["padding_top"] = 8
-    # else:
-    #     pattern_props["border_bottom"] = 1
-    #     pattern_props["border_color"] = BORDER_COLOR
 
     if small:
         return div(pattern_props)[

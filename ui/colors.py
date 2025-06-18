@@ -34,6 +34,9 @@ GRAY_SOFT = "#ADAFB7"
 BORDER_COLOR = "#000000"
 BORDER_COLOR_LIGHT = "#2E2D2D"
 BORDER_COLOR_LIGHTER = "#5E6165"
+PLAY_COLOR = "#13A126"
+DETECTED_COLOR = "#73BF69"
+THROTTLE_COLOR = "#FFCC00"
 
 def get_color(index: int) -> str:
     """Get color or loop back to start of list."""
