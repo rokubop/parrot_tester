@@ -50,11 +50,8 @@ def build_relative_import_path(current_file: Path, target_file: Path) -> str:
     if not all(part.isidentifier() for part in target_file.parts):
         raise ValueError(f"Invalid import path - folder/file names must be valid Python identifiers: {target_file}")
 
-    # Determine how many levels up we need to go from current file
     up_levels = len(current_file.parts) - 1
     dot_prefix = "." * up_levels if up_levels > 0 else "."
-
-    # Module path: foo/bar/baz.py → foo.bar.baz
     target_module = ".".join(target_file.parts)
 
     return f"{dot_prefix}.{target_module}"
@@ -337,6 +334,43 @@ class DetectionLogCollection:
     def clear(self):
         self.collection = []
         self.current_log = None
+
+class PatternsStats:
+    def __init__(self):
+        self.stats: dict[str, int] = {
+            # pattern_name:
+              # count of detections
+              # power
+                # min
+                # average
+                # max
+              # probability
+                # min
+                # average
+                # max
+              # f0
+                # min
+                # average
+                # max
+              # f1
+                # min
+                # average
+                # max
+              # f2
+                # min
+                # average
+                # max
+        }
+
+    def generate(self, log_collection: DetectionLogCollection):
+        # a log collection has a list of logs
+        # each log has a list of frames
+        # each frame has a winner which is what we want to aggregate
+        self.stats.clear()
+        for log in log_collection.collection:
+            for frame in log.frames:
+                winner = frame.winner
+                #
 
 capture_collection = CaptureCollection()
 detection_log_collection = DetectionLogCollection()

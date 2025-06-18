@@ -12,9 +12,9 @@ class Actions:
         parrot_tester_toggle()
 
     def parrot_tester_wrap_parrot_integration():
-        """Wrap parrot_integration file for introspection"""
+        """Wrap parrot_integration file for introspection - Automatically overwritten by context"""
         actions.skip()
 
     def parrot_tester_restore_parrot_integration():
-        """Restore parrot_integration file"""
+        """Restore parrot_integration file - Automatically overwritten by context"""
         actions.skip()
