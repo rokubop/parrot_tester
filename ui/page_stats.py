@@ -29,6 +29,7 @@ def table_stats():
     table, th, tr, td = actions.user.ui_elements(["table", "th", "tr", "td"])
     state = actions.user.ui_elements(["state"])
     stats = state.get("patterns_stats", {})
+    stats_list = list(stats.values()) if isinstance(stats, dict) else stats or []
 
     style({
         "th": {
@@ -63,7 +64,7 @@ def table_stats():
             ],
         ],
         *[
-            tr(id=f"pattern_{pattern_stats['name']}")[
+            tr()[
                 td(align_items="flex_start")[div(gap=8, min_width=60)[
                     text(pattern_stats["name"])
                 ]],
@@ -78,7 +79,7 @@ def table_stats():
                 td(align_items="flex_end", justify_content="center")[
                     number(str(round(pattern_stats["f2"]["average"]))),
                 ],
-            ] for pattern_stats in stats
+            ] for pattern_stats in stats_list
         ],
     ]
 

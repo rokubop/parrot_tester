@@ -398,8 +398,8 @@ class PatternsStats:
     def generate(self, log_collection):
         """Generate statistics from a log collection."""
         # Reset stats while keeping the structure
-        print("log_collection.collection:", log_collection.collection)
-        print("log_collection.current_log:", log_collection.current_log)
+        # print("log_collection.collection:", log_collection.collection)
+        # print("log_collection.current_log:", log_collection.current_log)
         for pattern in list(self.stats.keys()):
             self.stats[pattern]["count"] = 0
             for metric in ["power", "probability", "f0", "f1", "f2"]:
@@ -411,7 +411,7 @@ class PatternsStats:
         # Process all frames
         for log in log_collection.collection:
             for frame in log.frames:
-                print("adding frame to stats:", frame.id, frame.ts, frame.winner_name)
+                # print("adding frame to stats:", frame.id, frame.ts, frame.winner_name)
                 self.add_frame(frame)
 
         return self.get_stats()
@@ -474,7 +474,7 @@ def init_stats():
     if not patterns_stats:
         patterns_stats = PatternsStats()
     s = patterns_stats.generate(detection_log_collection)
-    print("Generated patterns stats:", s)
+    # print("Generated patterns stats:", s)
     actions.user.ui_elements_set_state("patterns_stats", s)
 
 def add_frame_to_stats(frame: ParrotTesterFrame):
@@ -672,6 +672,8 @@ def create_auto_generated_folder(generated_folder: Path):
 def get_pattern_json(name: str = None):
     """Get the pattern JSON for a specific name."""
     global_patterns = get_patterns_json()
+    print(f"Getting pattern JSON for name: {name}")
+    print(f"Pattern JSON: {global_patterns}")
     if global_patterns:
         return global_patterns.get(name, {})
     return {}
