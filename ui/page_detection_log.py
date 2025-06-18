@@ -1,5 +1,5 @@
 from talon import actions
-from ..components import (
+from .components import (
     legend,
     number,
     number_threshold,
@@ -9,7 +9,7 @@ from ..components import (
     pattern,
     subtitle,
 )
-from ...constants import (
+from .colors import (
     SECONDARY_COLOR,
     BORDER_COLOR,
     BG_DARKEST,
@@ -17,10 +17,11 @@ from ...constants import (
     ACTIVE_COLOR,
     BG_GRAY,
 )
-from ...parrot_integration_wrapper import (
+from ..parrot_integration_wrapper import (
     get_current_log_by_id,
     get_pattern_threshold_value,
     populate_detection_log_state,
+    set_detection_log_state_by_id,
 )
 
 def table_log():
@@ -30,7 +31,7 @@ def table_log():
     detection_current_log_id = state.get("detection_current_log_id", None)
     detection_current_log_frames = state.get("detection_current_log_frames", [])
     show_formants = state.get("show_formants", False)
-    show_thresholds = state.get("show_thresholds", True)
+    show_thresholds = state.get("show_thresholds", False)
 
     style({
         "th": {
@@ -56,9 +57,9 @@ def table_log():
             th()[text("Pattern", color=SECONDARY_COLOR)],
             # th()[text("Sounds", color=SECONDARY_COLOR)],
             th(align_items="flex_end")[text("Power", color=SECONDARY_COLOR)],
-            th(align_items="flex_end")[text(">power", color=SECONDARY_COLOR)] if show_thresholds else None,
+            th(align_items="flex_end")[text(">Pow", color=SECONDARY_COLOR)] if show_thresholds else None,
             th(align_items="flex_end")[text("Prob.", color=SECONDARY_COLOR)],
-            th(align_items="flex_end")[text(">prob.", color=SECONDARY_COLOR)] if show_thresholds else None,
+            th(align_items="flex_end")[text(">Prob.", color=SECONDARY_COLOR)] if show_thresholds else None,
             *[
                 th(align_items="flex_end", justify_content="center")[
                     text("F0", color=SECONDARY_COLOR),
@@ -141,13 +142,16 @@ def page_detection_log():
         div(flex_direction="column", background_color=BG_GRAY, height=750, border_right=1, border_color=BORDER_COLOR, overflow_y="scroll")[
             subtitle("Detection Log History"),
             *[button(
-                margin=4,
+                margin=1,
                 margin_left=8,
                 margin_right=8,
-                padding=8,
+                padding=9,
                 border_radius=4,
                 background_color=ACTIVE_COLOR if log_id == current_log_id else BG_GRAY,
-                on_click=lambda log_id=log_id: set_current_log_id(log_id)
+                on_click=lambda e, log_id=log_id: (
+                    set_current_log_id(log_id),
+                    set_detection_log_state_by_id(log_id),
+                ),
             )[
                 number(log_id)
             ] for log_id in detection_log_history],

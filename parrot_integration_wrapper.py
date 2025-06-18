@@ -6,7 +6,7 @@ from talon import actions, cron
 from talon.experimental.parrot import ParrotFrame
 from talon_init import TALON_USER
 from math import floor
-from .constants import get_color
+from .ui.colors import get_color
 
 patterns_json = {}
 
@@ -135,11 +135,13 @@ class ParrotTesterFrame:
     @property
     def winner_power_threshold(self):
         name = self.winner_name
+        patterns_json = get_patterns_json()
         return patterns_json.get(name, {}).get("threshold", {}).get(">power", None)
 
     @property
     def winner_grace_power_threshold(self):
         name = self.winner_name
+        patterns_json = get_patterns_json()
         return patterns_json.get(name, {}).get("grace_threshold", {}).get(">power", None)
 
     @property
@@ -432,16 +434,25 @@ def wrap_pattern_match(parrot_delegate):
             if tab == "patterns":
                 for name in active:
                     actions.user.ui_elements_highlight_briefly(f"pattern_{name}")
-            elif tab == "detection_log" or actions.user.ui_elements_get_state("minimized"):
+            elif tab == "detection_log" or tab == "activity" or actions.user.ui_elements_get_state("minimized"):
                 populate_detection_log_state()
 
         return active
     return wrapper
 
+def set_detection_log_state_by_id(log_id: str):
+    """Set the detection log state based on the log ID."""
+    actions.user.ui_elements_set_state("detection_current_log_id", log_id)
+    if detection_log_collection.current_log and detection_log_collection.current_log.id() == log_id:
+        actions.user.ui_elements_set_state("detection_current_log_frames", detection_log_collection.current_log_frames())
+    else:
+        log = detection_log_collection.get_log_by_id(log_id)
+        actions.user.ui_elements_set_state("detection_current_log_frames", log.frames if log else [])
+
 def populate_detection_log_state():
     actions.user.ui_elements_set_state("detection_log_history", detection_log_collection.history())
-    actions.user.ui_elements_set_state("detection_current_log_id", detection_log_collection.current_log.id() if detection_log_collection.current_log else None)
-    actions.user.ui_elements_set_state("detection_current_log_frames", detection_log_collection.current_log_frames() if detection_log_collection.current_log else [])
+    log_id = detection_log_collection.current_log.id() if detection_log_collection.current_log else None
+    set_detection_log_state_by_id(log_id)
 
 original_pattern_match = None
 
@@ -454,15 +465,7 @@ def parrot_tester_wrap_parrot_integration(parrot_delegate):
     if original_pattern_match is None:
         original_pattern_match = parrot_delegate.pattern_match
         parrot_delegate.pattern_match = wrap_pattern_match(parrot_delegate)
-
-# def parrot_tester_wrap_parrot_integration(parrot_delegate, file: str):
-#     global original_pattern_match
-#     if original_pattern_match is None:
-#         with open(file, "r", encoding="utf-8") as f:
-#             print("Wrapping pattern_integration.py")
-#             original_pattern_match = parrot_delegate.pattern_match
-#             parrot_delegate.pattern_match = wrap_pattern_match(parrot_delegate)
-#             parrot_delegate.set_patterns(json.load(f))
+        print("parrot_integration.py wrapped")
 
 def parrot_tester_restore_parrot_integration(parrot_delegate):
     global original_pattern_match
@@ -471,6 +474,7 @@ def parrot_tester_restore_parrot_integration(parrot_delegate):
         original_pattern_match = None
 
     reset_capture_collection()
+    print("parrot_integration.py restored")
 
 # def parrot_tester_restore_parrot_integration(parrot_delegate, original_file: str):
 #     """Restore pattern patterns."""
@@ -486,8 +490,8 @@ def parrot_tester_restore_parrot_integration(parrot_delegate):
 #     reset_capture_collection()
 
 def generate_parrot_integration_hook(import_path: str, current_file: Path):
-    target_dir = current_file.parent.parent
-    test_file = target_dir / "parrot_integration_hook.py"
+    target_dir = current_file.parent
+    hook_file = target_dir / "parrot_integration_hook.py"
 
     code = f"""\
 # AUTO-GENERATED: Do not edit manually.
@@ -496,7 +500,7 @@ def generate_parrot_integration_hook(import_path: str, current_file: Path):
 try:
     from talon import Context
     from {import_path} import parrot_delegate
-    from .src.parrot_integration_wrapper import (
+    from .parrot_integration_wrapper import (
         parrot_tester_wrap_parrot_integration,
         parrot_tester_restore_parrot_integration
     )
@@ -514,30 +518,8 @@ except ImportError:
     pass
 """
 
-    test_file.write_text(code)
-    print(f"✅ Wrote test file to {test_file}")
-
-# def copy_patterns_to_generated(original_path: Path, generated_path: Path):
-#     generated_path = generated_path / "patterns_draft.json"
-#     try:
-#         with original_path.open("r", encoding="utf-8") as f:
-#             patterns = json.load(f)
-
-#         # set power to 1
-#         # for pattern in patterns.values():
-#         #     for section in ("threshold", "grace_threshold"):
-#         #         if section in pattern:
-#         #             if ">power" in pattern[section]:
-#         #                 pattern[section][">power"] = 1
-
-#         with generated_path.open("w", encoding="utf-8") as f:
-#             json.dump(patterns, f, indent=2)
-
-#         print(f"✅ Copied patterns.json to: {generated_path}")
-#         return patterns
-#     except Exception as e:
-#         print(f"❌ Failed to copy patterns.json: {e}")
-#         return {}
+    hook_file.write_text(code)
+    print(f"Generated file: {hook_file}")
 
 def create_auto_generated_folder(generated_folder: Path):
     """Create the auto_generated folder if it doesn't exist."""
@@ -549,28 +531,38 @@ def create_auto_generated_folder(generated_folder: Path):
 
 def get_pattern_json(name: str = None):
     """Get the pattern JSON for a specific name."""
-    global patterns_json
+    patterns_json = get_patterns_json()
     if patterns_json and name is not None:
         return patterns_json.get(name, {})
     return patterns_json
 
 def get_pattern_threshold_value(name: str, key: str):
     """Get a specific value from the pattern JSON."""
-    global patterns_json
+    patterns_json = get_patterns_json()
     if patterns_json and name in patterns_json:
         return patterns_json[name].get("threshold", {}).get(key, None)
     return None
 
 def get_pattern_color(name: str):
+    patterns_json = get_patterns_json()
     try:
         index = list(patterns_json.keys()).index(name)
         return get_color(index)
     except:
         return "#FFFFFF"
 
+def get_patterns_json():
+    """Get the patterns JSON."""
+    global patterns_json
+    if not patterns_json:
+        patterns_py_path = get_patterns_py_path().resolve()
+        patterns_json = load_patterns(patterns_py_path)
+    return patterns_json
+
 def parrot_tester_initialize():
     """Test function to check if the paths are correct."""
     global patterns_json
+    print("**** Starting Parrot Tester ****")
     parrot_integration_path = get_parrot_integration_path().resolve()
     patterns_py_path = get_patterns_py_path().resolve()
     current_path = Path(__file__).resolve()
@@ -580,16 +572,13 @@ def parrot_tester_initialize():
     user_root = Path(TALON_USER).resolve()
 
     current_rel = current.relative_to(user_root)
-    target_rel = target.relative_to(user_root).with_suffix("")  # drop .py
+    target_rel = target.relative_to(user_root).with_suffix("")
 
     patterns_json = load_patterns(patterns_py_path)
 
     import_path = build_relative_import_path(current_rel, target_rel)
     generate_parrot_integration_hook(import_path, current_path)
     actions.user.parrot_tester_wrap_parrot_integration()
-
-    # print(f"Parrot Integration Path: {parrot_integration_path}")
-    # print(f"Patterns.py Path: {patterns_py_path}")
 
 def restore_patterns_paused():
     actions.user.parrot_tester_restore_parrot_integration()

@@ -1,11 +1,11 @@
 from talon import actions
-from ...constants import (
+from .colors import (
     BORDER_COLOR,
 )
-from ..components import (
+from .components import (
     pattern
 )
-from ...parrot_integration_wrapper import (
+from ..parrot_integration_wrapper import (
     get_pattern_json,
 )
 

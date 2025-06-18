@@ -1,6 +1,6 @@
 
 from talon import Module, actions
-from .src.ui.parrot_tester_ui import parrot_tester_toggle
+from .ui.app import parrot_tester_toggle
 
 mod = Module()
 mod.tag("parrot_tester", "mode for testing parrot")

@@ -1,5 +1,5 @@
 from talon import actions
-from ...constants import (
+from .colors import (
     BORDER_COLOR,
     BORDER_COLOR_LIGHT,
 )

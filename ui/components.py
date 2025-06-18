@@ -3,7 +3,7 @@ from ..parrot_integration_wrapper import (
     get_pattern_json,
     get_pattern_color,
 )
-from ..constants import (
+from .colors import (
     ACCENT_COLOR,
     ACTIVE_COLOR,
     BG_INPUT,
@@ -14,7 +14,7 @@ from ..constants import (
     SECONDARY_COLOR,
 )
 
-def last_detection():
+def last_detection(size="small"):
     div, text, state = actions.user.ui_elements(["div", "text", "state"])
     detection_current_log_frames = state.get("detection_current_log_frames", [])
 
@@ -22,24 +22,24 @@ def last_detection():
 
     if not last_frame or not last_frame.winner:
         return div(flex_direction="column", gap=12, width=200, align_items="center", padding=8)[
-            text("-", font_size=30, color=GRAY_SOFT)
+            text("-", font_size=30 if size == "small" else 50, color=GRAY_SOFT)
         ]
 
-    return div(flex_direction="column", gap=12, width=200, align_items="center", padding=8)[
+    return div(flex_direction="column", gap=12 if size == "small" else 24, width=200, align_items="center", padding=8)[
         text(
             last_frame.winner["name"] if last_frame else "-",
-            font_size=30,
+            font_size=30 if size == "small" else 50,
             color=ACCENT_COLOR
         ),
         div(flex_direction="row", gap=8, align_items="center")[
             text(
                 last_frame.format(last_frame.power, 2) if last_frame else "",
-                font_size=14,
+                font_size=14 if size == "small" else 24,
             ),
             text("/"),
             text(
                 last_frame.format(last_frame.winner["probability"], 3) if last_frame else "",
-                font_size=14,
+                font_size=14 if size == "small" else 24,
             ),
         ],
         power_ratio_bar(
@@ -145,7 +145,7 @@ def table_controls():
     double_pop_pause, set_double_pop_pause = state.use("double_pop_pause", False)
     disable_actions, set_disable_actions = state.use("disable_actions", False)
     show_formants, set_show_formants = state.use("show_formants", False)
-    show_thresholds, set_show_thresholds = state.use("show_thresholds", False)
+    show_thresholds, set_show_thresholds = state.use("show_thresholds", True)
     tab = state.get("tab")
 
     checkbox_props = {

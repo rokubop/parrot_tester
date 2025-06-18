@@ -4,25 +4,25 @@ from ..parrot_integration_wrapper import (
     restore_patterns,
     parrot_tester_initialize
 )
-from .pages.page_about import page_about
-from .pages.page_detection_log import page_detection_log
-from .pages.page_frames import page_frames
-from .pages.page_patterns import page_patterns
-from .pages.page_stats import page_stats
-from .pages.page_pattern_edit import edit_page
-from .pages.page_settings import page_settings
+from .page_about import page_about
+from .page_detection_log import page_detection_log
+from .page_frames import page_frames
+from .page_patterns import page_patterns
+from .page_stats import page_stats
+from .page_settings import page_settings
+from .page_activity import page_activity
 from .components import last_detection
-from ..constants import (
+from .colors import (
     ACTIVE_COLOR,
     BG_DARKEST,
     BORDER_COLOR,
     WINDOW_BORDER_COLOR,
 )
-import traceback
 
-tab_id_to_page = {
+TAB_ID_TO_PAGE = {
     "frames": page_frames,
     "detection_log": page_detection_log,
+    "activity": page_activity,
     "patterns": page_patterns,
     # "stats": page_stats,
     # "settings": page_settings,
@@ -46,10 +46,10 @@ def tabs():
                 width="100%",
                 border_radius=2,
             ) if tab_state == tab else None
-        ] for tab in tab_id_to_page.keys()]
+        ] for tab in TAB_ID_TO_PAGE.keys()]
     ]
 
-common_play_button_props = {
+play_button_props = {
     "padding": 8,
     "padding_left": 24,
     "padding_right": 28,
@@ -78,7 +78,7 @@ def play_button():
 
     if play:
         return button(
-            common_play_button_props,
+            play_button_props,
             on_click=toggle_play,
             background_color=ACTIVE_COLOR,
             autofocus=True,
@@ -88,7 +88,7 @@ def play_button():
         ]
     else:
         return button(
-            common_play_button_props,
+            play_button_props,
             on_click=toggle_play,
             autofocus=True,
             background_color=play_bg_color,
@@ -100,14 +100,10 @@ def play_button():
 def parrot_tester_pause():
     restore_patterns_paused()
 
-def parrot_tester_disable():
-    print("Disabling parrot tester")
-    restore_patterns()
-
 def parrot_tester_disable_and_exit():
-    print("Disabling parrot tester")
     restore_patterns()
     actions.user.ui_elements_hide_all()
+    print("**** Disabled Parrot Tester ****")
 
 def parrot_tester_toggle():
     if actions.user.ui_elements_is_active(parrot_tester_ui):
@@ -137,8 +133,7 @@ def parrot_tester_ui():
         "window", "div", "screen", "style", "component"
     ])
     state = actions.user.ui_elements(['state'])
-    tab_state = state.get("tab", next(iter(tab_id_to_page)))
-    edit_pattern, set_edit_pattern = state.use("edit_pattern", None)
+    tab_state = state.get("tab", next(iter(TAB_ID_TO_PAGE)))
 
     style({
         "*": {
@@ -153,15 +148,15 @@ def parrot_tester_ui():
     return screen(justify_content="center", align_items="center")[
         window(
             title="Parrot Tester",
-            on_close=parrot_tester_disable_and_exit,
             flex_direction="column",
-            min_width=1100,
-            background_color=BG_DARKEST,
-            border_radius=8,
             border_width=1,
+            border_radius=8,
+            background_color=BG_DARKEST,
             border_color=WINDOW_BORDER_COLOR,
+            min_width=1100,
             on_minimize=lambda: state.set("minimized", True),
             on_restore=lambda: state.set("minimized", False),
+            on_close=parrot_tester_disable_and_exit,
             minimized_ui=minimized_ui,
             minimized_style={
                 "position": "absolute",
@@ -169,17 +164,15 @@ def parrot_tester_ui():
                 "right": 100
             }
         )[
-            edit_page() if edit_pattern else (
-                div(flex_direction="row", align_items="stretch", justify_content="space_between", border_bottom=1, border_color=BORDER_COLOR)[
-                    tabs(),
-                    # global_options(),
-                    div(padding=8)[
-                        play_button(),
-                    ],
+            div(flex_direction="row", align_items="stretch", justify_content="space_between", border_bottom=1, border_color=BORDER_COLOR)[
+                tabs(),
+                # global_options(),
+                div(padding=8)[
+                    play_button(),
                 ],
-                div(min_height=750, max_height=900)[
-                    component(tab_id_to_page[tab_state]),
-                ]
-            )
+            ],
+            div(min_height=750, max_height=900)[
+                component(TAB_ID_TO_PAGE[tab_state]),
+            ]
         ]
     ]

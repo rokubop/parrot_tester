@@ -1,5 +1,5 @@
 from talon import actions
-from ..components import (
+from .components import (
     legend,
     number,
     status_cell,
@@ -8,7 +8,7 @@ from ..components import (
     pattern,
     subtitle,
 )
-from ...constants import (
+from .colors import (
     SECONDARY_COLOR,
     BORDER_COLOR,
     BORDER_COLOR_LIGHTER,
@@ -161,14 +161,6 @@ def page_frames():
 
     state = actions.user.ui_elements("state")
     capture_updating = state.get("capture_updating", False)
-
-    def on_mount(e):
-        print("Mounting frames page")
-
-    def on_unmount(e):
-        print("Unmounting frames page")
-
-    effect(on_mount, on_unmount, [])
 
     return div(background_color=BG_DARKEST, flex_direction="row", height=750)[
         div(flex_direction="column", background_color=BG_GRAY, gap=16, height=750, border_right=1, border_color=BORDER_COLOR)[

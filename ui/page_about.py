@@ -1,7 +1,7 @@
 from talon import actions
 import json
 import os
-from ...constants import (
+from .colors import (
     SECONDARY_COLOR,
     ACCENT_COLOR,
     BORDER_COLOR,
