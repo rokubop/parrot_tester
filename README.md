@@ -2,6 +2,8 @@
 
 Parrot Tester is a visualization tool to help you analyze your parrot integration with Talon, showing live data for frames, history, activity, and stats, using your existing `parrot_integration.py` and `patterns.json` files.
 
+![preview](preview.png)
+
 ## Prerequisites
 - Talon beta with a working parrot model
 - A `parrot_integration.py` file anywhere in your Talon user directory (will be auto discovered)

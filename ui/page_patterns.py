@@ -31,7 +31,7 @@ def page_patterns():
                             "highlight_when_active": True,
                         }),
                     ]
-                ] for name in group]
+                ] for name, _ in group]
             ] for group in pattern_groups]
         ]
     ]

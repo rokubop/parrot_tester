@@ -1,9 +1,72 @@
 {
   "name": "parrot_tester",
+  "title": "Parrot Tester",
   "description": "Visual tool for testing parrot integration with Talon",
   "version": "1.0.0",
+  "github": "https://github.com/rokubop/parrot_tester",
+  "preview": "https://github.com/rokubop/parrot_tester/preview.png",
+  "author": "Rokubop",
+  "tags": [
+    "parrot"
+  ],
+  "vars": {
+    "repo": "https://github.com/yourusername/parrot_tester"
+  },
+  "platforms": [
+    "mac",
+    "linux",
+    "windows_powershell",
+    "windows_cmd",
+    "windows_bash"
+  ],
+  "commands": {
+    "cd_user": {
+      "mac": "cd ~/.talon/user",
+      "linux": "cd ~/.talon/user",
+      "windows_powershell": "cd \"$env:APPDATA\\talon\\user\"",
+      "windows_cmd": "cd %APPDATA%\\talon\\user",
+      "windows_bash": "cd \"$(cygpath \"$APPDATA\")/talon/user\""
+    }
+  },
+  "install": {
+    "mac": [
+      "cd ~/.talon/user",
+      "[ -d talon-ui-elements ] || git clone https://github.com/rokubop/talon-ui-elements",
+      "git clone https://github.com/rokubop/parrot_tester"
+    ],
+    "linux": [
+      "cd ~/.talon/user",
+      "[ -d talon-ui-elements ] || git clone https://github.com/rokubop/talon-ui-elements",
+      "git clone https://github.com/rokubop/parrot_tester"
+    ],
+    "windows_powershell": [
+      "cd \"$env:APPDATA\\talon\\user\"",
+      "if (!(Test-Path \"talon-ui-elements\")) { git clone https://github.com/rokubop/talon-ui-elements }",
+      "git clone https://github.com/rokubop/parrot_tester"
+    ],
+    "windows_cmd": [
+      "cd %APPDATA%\\talon\\user",
+      "if not exist talon-ui-elements git clone https://github.com/rokubop/talon-ui-elements",
+      "git clone https://github.com/rokubop/parrot_tester"
+    ],
+    "windows_bash": [
+      "cd \"$(cygpath \"$APPDATA\")/talon/user\"",
+      "[ -d talon-ui-elements ] || git clone https://github.com/rokubop/talon-ui-elements",
+      "git clone https://github.com/rokubop/parrot_tester"
+    ],
+    "mac_linux": []
+  },
+  "post_install_message": [
+    "✅ Parrot Tester installed.",
+    "▶️ Say 'parrot tester' to toggle the tester interface."
+  ],
+  "dependencies": {
+    "talon-ui-elements": ">=0.9.0"
+  },
   "contributes": {
-    "tags": ["user.parrot_tester"],
+    "tags": [
+      "user.parrot_tester"
+    ],
     "actions": [
       "user.parrot_tester_restore_parrot_integration",
       "user.parrot_tester_toggle",

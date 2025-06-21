@@ -11,10 +11,11 @@ from .page_patterns import page_patterns
 from .page_stats import page_stats
 from .page_settings import page_settings
 from .page_activity import page_activity
-from .components import last_detection
+from .components import last_detection, table_controls
 from .colors import (
     ACTIVE_COLOR,
     BG_DARKEST,
+    BG_DARK,
     BORDER_COLOR,
     PLAY_COLOR,
     WINDOW_BORDER_COLOR,
@@ -33,14 +34,17 @@ TAB_ID_TO_PAGE = {
 def parrot_tester_pause():
     restore_patterns_paused()
 
-def parrot_tester_disable_and_exit():
+def parrot_tester_disable():
     restore_patterns()
-    actions.user.ui_elements_hide_all()
     print("**** Disabled Parrot Tester ****")
+
+def parrot_tester_disable_and_hide():
+    parrot_tester_disable()
+    actions.user.ui_elements_hide_all()
 
 def parrot_tester_toggle():
     if actions.user.ui_elements_is_active(parrot_tester_ui):
-        parrot_tester_disable_and_exit()
+        parrot_tester_disable_and_hide()
     else:
         try:
             parrot_tester_initialize()
@@ -48,7 +52,7 @@ def parrot_tester_toggle():
         except Exception as e:
             # traceback.print_exc()
             print(f"Error initializing parrot tester: {e}")
-            parrot_tester_disable_and_exit()
+            parrot_tester_disable_and_hide()
             return
 
 format_label = lambda label: ' '.join(label.split("_")).capitalize()
@@ -141,7 +145,7 @@ def parrot_tester_ui():
             min_width=1100,
             on_minimize=lambda: state.set("minimized", True),
             on_restore=lambda: state.set("minimized", False),
-            on_close=parrot_tester_disable_and_exit,
+            on_close=parrot_tester_disable,
             minimized_ui=minimized_ui,
             minimized_style={
                 "position": "absolute",

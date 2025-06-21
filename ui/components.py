@@ -137,6 +137,8 @@ def table_controls():
     disable_actions, set_disable_actions = state.use("disable_actions", False)
     show_formants, set_show_formants = state.use("show_formants", False)
     show_thresholds, set_show_thresholds = state.use("show_thresholds", True)
+    debug_power, set_debug_power = state.use("debug_power", False)
+    debug_probability, set_debug_probability = state.use("debug_probability", False)
     tab = state.get("tab")
 
     checkbox_props = {
@@ -164,8 +166,12 @@ def table_controls():
             text("Show thresholds", for_id="show_thresholds"),
         ] if tab == "detection_log" else None,
         # div(flex_direction="row", gap=8, align_items="center")[
-        #     checkbox(checkbox_props, id="debug_mode", on_change=lambda e: state.set("debug_mode", e.checked)),
-        #     text("Debug mode", for_id="debug_mode"),
+        #     checkbox(checkbox_props, id="debug_power", checked=debug_power, on_change=lambda e: set_debug_power(e.checked)),
+        #     text("Debug power (>1.0)", for_id="debug_power"),
+        # ],
+        # div(flex_direction="row", gap=8, align_items="center")[
+        #     checkbox(checkbox_props, id="debug_probability", checked=debug_probability, on_change=lambda e: set_debug_probability(e.checked)),
+        #     text("Debug prob. (>0.10)", for_id="debug_probability"),
         # ],
         # button(padding=8, padding_left=12, padding_right=12, flex_direction="row", align_items="center", gap=4, border_color=BORDER_COLOR, border_width=2, border_radius=4)[
         #     text("Capture time"),
@@ -336,21 +342,21 @@ def pattern(props):
         ]
     ]
 
-def removable_pill(name):
-    div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
+# def removable_pill(name):
+#     div, text, icon = actions.user.ui_elements(["div", "text", "icon"])
 
-    return div(flex_direction="row", border_width=1, border_color="555555", background_color=f"55555533", padding=4, border_radius=4)[
-        text(name, font_size=14),
-        icon("close", size=14, color="555555", stroke_width=3, margin_left=8),
-    ]
+#     return div(flex_direction="row", border_width=1, border_color="555555", background_color=f"55555533", padding=4, border_radius=4)[
+#         text(name, font_size=14),
+#         icon("close", size=14, color="555555", stroke_width=3, margin_left=8),
+#     ]
 
-def pattern_pill(name):
-    div, text = actions.user.ui_elements(["div", "text"])
+# def pattern_pill(name):
+#     div, text = actions.user.ui_elements(["div", "text"])
 
-    if name in get_pattern_json():
-        pattern_color = get_pattern_color(name)
-    else:
-        pattern_color = "555555"
-    return div(border_width=1, border_color=pattern_color, background_color=f"{pattern_color}33", padding=4, border_radius=4)[
-        text(f"+ {name}", font_size=14)
-    ]
+#     if name in get_patterns_json():
+#         pattern_color = get_pattern_color(name)
+#     else:
+#         pattern_color = "555555"
+#     return div(border_width=1, border_color=pattern_color, background_color=f"{pattern_color}33", padding=4, border_radius=4)[
+#         text(f"+ {name}", font_size=14)
+#     ]

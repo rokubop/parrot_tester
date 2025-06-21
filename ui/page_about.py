@@ -10,7 +10,7 @@ from .colors import (
 
 def get_version():
     manifest_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "manifest.json")
+        os.path.join(os.path.dirname(__file__), "..", "manifest.json")
     )
     try:
         with open(manifest_path, "r", encoding="utf-8") as f:

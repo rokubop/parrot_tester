@@ -149,34 +149,36 @@ def page_frames():
     state = actions.user.ui_elements("state")
     capture_updating = state.get("capture_updating", False)
 
-    return div(background_color=BG_DARKEST, flex_direction="row", height=750)[
-        div(flex_direction="column", background_color=BG_GRAY, gap=16, height=750, border_right=1, border_color=BORDER_COLOR)[
-            detected_patterns(),
-        ],
-        div(flex_direction="column", gap=16, flex=1)[
-            div(flex=1, position="relative")[
-                div(background_color=BG_DARK, border_color=BORDER_COLOR, border_bottom=1)[
-                    div(flex_direction="row", padding=8, justify_content="space_between", align_items="center")[
-                        text("Frames", font_size=16),
-                        component(table_controls),
+    return div()[
+        div(background_color=BG_DARKEST, flex_direction="row", height=750)[
+            div(flex_direction="column", background_color=BG_GRAY, gap=16, height=750, border_right=1, border_color=BORDER_COLOR)[
+                detected_patterns(),
+            ],
+            div(flex_direction="column", gap=16, flex=1)[
+                div(flex=1, position="relative")[
+                    div(background_color=BG_DARK, border_color=BORDER_COLOR, border_bottom=1)[
+                        div(flex_direction="row", padding=8, justify_content="space_between", align_items="center")[
+                            text("Frames", font_size=16),
+                            component(table_controls),
+                        ],
+                    ],
+                    div(position="relative", flex=1)[
+                        component(table_frames),
+                        div(position="absolute", top=0, right=0)[
+                            text("Updating...", font_size=14, padding=2)
+                        ] if capture_updating else None,
+                    ],
+                    div(
+                        position="absolute",
+                        bottom=0,
+                        right=0,
+                        flex_direction="row",
+                        justify_content="flex_end",
+                        background_color=BG_DARK,
+                    )[
+                        legend(),
                     ],
                 ],
-                div(position="relative", flex=1)[
-                    component(table_frames),
-                    div(position="absolute", top=0, right=0)[
-                        text("Updating...", font_size=14, padding=2)
-                    ] if capture_updating else None,
-                ],
-                div(
-                    position="absolute",
-                    bottom=0,
-                    right=0,
-                    flex_direction="row",
-                    justify_content="flex_end",
-                    background_color=BG_DARK,
-                )[
-                    legend(),
-                ],
             ],
-        ],
+        ]
     ]

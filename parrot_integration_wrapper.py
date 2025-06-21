@@ -7,6 +7,7 @@ from talon.experimental.parrot import ParrotFrame
 from talon_init import TALON_USER
 from math import floor
 from .ui.colors import get_color
+import json
 
 patterns_json = {}
 
@@ -67,6 +68,11 @@ STATUS_ORDER = {
     "throttled": 2,
     "": 3
 }
+
+def format(value: float, decimals: int = 3) -> str:
+    if value is None:
+        return ""
+    return truncate_stringify(value, decimals)
 
 class ParrotTesterFrame:
     THRESHOLD_PROBABILITY = 0.1
@@ -341,7 +347,7 @@ class PatternsStats:
         self.total_frames = {}
         # Initialize stats structure from patterns in get_patterns_json
         global_patterns = get_patterns_json()
-        print("Initializing PatternsStats with patterns:", global_patterns.keys())
+        # print("Initializing PatternsStats with patterns:", global_patterns.keys())
         for pattern_name in global_patterns.keys():
             self._initialize_pattern_stats(pattern_name)
 
@@ -420,36 +426,35 @@ class PatternsStats:
         """Get the current statistics with averages calculated."""
         result = {}
         for pattern_name, stats in self.stats.items():
-            if stats["count"] > 0:
-                result[pattern_name] = {
-                    "name": pattern_name,
-                    "count": stats["count"],
-                    "power": {
-                        "min": stats["power"]["min"] if stats["power"]["min"] != float('inf') else 0,
-                        "average": stats["power"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
-                        "max": stats["power"]["max"] if stats["power"]["max"] != float('-inf') else 0
-                    },
-                    "probability": {
-                        "min": stats["probability"]["min"] if stats["probability"]["min"] != float('inf') else 0,
-                        "average": stats["probability"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
-                        "max": stats["probability"]["max"] if stats["probability"]["max"] != float('-inf') else 0
-                    },
-                    "f0": {
-                        "min": stats["f0"]["min"] if stats["f0"]["min"] != float('inf') else 0,
-                        "average": stats["f0"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
-                        "max": stats["f0"]["max"] if stats["f0"]["max"] != float('-inf') else 0
-                    },
-                    "f1": {
-                        "min": stats["f1"]["min"] if stats["f1"]["min"] != float('inf') else 0,
-                        "average": stats["f1"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
-                        "max": stats["f1"]["max"] if stats["f1"]["max"] != float('-inf') else 0
-                    },
-                    "f2": {
-                        "min": stats["f2"]["min"] if stats["f2"]["min"] != float('inf') else 0,
-                        "average": stats["f2"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
-                        "max": stats["f2"]["max"] if stats["f2"]["max"] != float('-inf') else 0
-                    }
+            result[pattern_name] = {
+                "name": pattern_name,
+                "count": stats["count"],
+                "power": {
+                    "min": stats["power"]["min"] if stats["power"]["min"] != float('inf') else 0,
+                    "average": stats["power"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                    "max": stats["power"]["max"] if stats["power"]["max"] != float('-inf') else 0
+                },
+                "probability": {
+                    "min": stats["probability"]["min"] if stats["probability"]["min"] != float('inf') else 0,
+                    "average": stats["probability"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                    "max": stats["probability"]["max"] if stats["probability"]["max"] != float('-inf') else 0
+                },
+                "f0": {
+                    "min": stats["f0"]["min"] if stats["f0"]["min"] != float('inf') else 0,
+                    "average": stats["f0"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                    "max": stats["f0"]["max"] if stats["f0"]["max"] != float('-inf') else 0
+                },
+                "f1": {
+                    "min": stats["f1"]["min"] if stats["f1"]["min"] != float('inf') else 0,
+                    "average": stats["f1"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                    "max": stats["f1"]["max"] if stats["f1"]["max"] != float('-inf') else 0
+                },
+                "f2": {
+                    "min": stats["f2"]["min"] if stats["f2"]["min"] != float('inf') else 0,
+                    "average": stats["f2"]["sum"] / self.total_frames[pattern_name] if self.total_frames[pattern_name] > 0 else 0,
+                    "max": stats["f2"]["max"] if stats["f2"]["max"] != float('-inf') else 0
                 }
+            }
 
         return result
 
@@ -491,11 +496,32 @@ def get_stats():
         init_stats()
     return patterns_stats.get_stats()
 
+def get_stats_pretty_print(name: str = None) -> str:
+    if name:
+        return format_stats_multiline(get_stats().get(name, {}))
+    # do all
+    stats = get_stats()
+    return "\n".join(format_stats_multiline(entry) for entry in stats.values() if entry["count"] > 0)
+
 def reset_stats():
     """Reset the patterns statistics."""
     global patterns_stats
     if patterns_stats:
         patterns_stats.clear()
+
+def update_stats_state():
+    """Update the Talon UI state with the current patterns statistics."""
+    global patterns_stats
+    if patterns_stats is None:
+        init_stats()
+    actions.user.ui_elements_set_state("patterns_stats", patterns_stats.get_stats())
+
+def format_stats_multiline(entry: dict) -> str:
+    lines = [f"{entry['name']} (count: {entry['count']})"]
+    for key in ["power", "probability", "f0", "f1", "f2"]:
+        values = entry[key]
+        lines.append(f"  {key}: min={values['min']}, avg={values['average']}, max={values['max']}")
+    return "\n".join(lines)
 
 def reset_capture_collection():
     global log_events, patterns_stats
@@ -589,6 +615,9 @@ def wrap_pattern_match(parrot_delegate):
                     actions.user.ui_elements_highlight_briefly(f"pattern_{name}")
             elif tab == "detection_log" or tab == "activity" or actions.user.ui_elements_get_state("minimized"):
                 populate_detection_log_state()
+            elif tab == "stats":
+                add_frame_to_stats(parrot_tester_frame)
+                update_stats_state()
 
         return active
     return wrapper
@@ -672,8 +701,9 @@ def create_auto_generated_folder(generated_folder: Path):
 def get_pattern_json(name: str = None):
     """Get the pattern JSON for a specific name."""
     global_patterns = get_patterns_json()
-    print(f"Getting pattern JSON for name: {name}")
-    print(f"Pattern JSON: {global_patterns}")
+    # print(f"Pattern JSON: {json.dumps(global_patterns)}")
+    # print(f"Getting pattern JSON for name: {name}")
+    # print(f"Pattern JSON:", global_patterns)
     if global_patterns:
         return global_patterns.get(name, {})
     return {}
