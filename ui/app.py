@@ -48,10 +48,16 @@ def parrot_tester_toggle():
     else:
         try:
             parrot_tester_initialize()
-            actions.user.ui_elements_show(parrot_tester_ui, show_hints=False)
+            actions.user.ui_elements_show(
+                parrot_tester_ui,
+                show_hints=False,
+                min_version="0.9.0"
+            )
         except Exception as e:
             # traceback.print_exc()
             print(f"Error initializing parrot tester: {e}")
+            if "min_version" in str(e):
+                print("Parrot Tester requires Talon UI Elements version 0.9.0 or higher.")
             parrot_tester_disable_and_hide()
             return
 

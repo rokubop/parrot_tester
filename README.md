@@ -1,4 +1,4 @@
-# Parrot Tester
+# Parrot Tester (WIP)
 
 Parrot Tester is a visualization tool to help you analyze your parrot integration with Talon, showing live data for frames, history, activity, and stats, using your existing `parrot_integration.py` and `patterns.json` files.
 

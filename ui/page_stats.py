@@ -106,8 +106,11 @@ def table_stats():
     copied, set_copied = state.use("copied", {})
     stats_list = list(stats.values()) if isinstance(stats, dict) else stats or []
     stats_list_groups = [stats_list]
+
+    # Break stats into two groups if there are more than 10 items
     if len(stats_list) > 10:
-        stats_list_groups = [stats_list[i:i + 10] for i in range(0, len(stats_list), 10)]
+        mid = (len(stats_list) + 1) // 2
+        stats_list_groups = [stats_list[:mid], stats_list[mid:]]
 
     def on_mount(e):
         update_stats_state()
