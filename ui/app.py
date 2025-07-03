@@ -113,7 +113,7 @@ def play_button():
         text("PAUSE" if play else "Start listening"),
     ]
 
-def minimized_ui():
+def minimized_body():
     div = actions.user.ui_elements(["div"])
 
     return div(flex_direction="row", align_items="center", justify_content="space_between", padding=8)[
@@ -152,7 +152,7 @@ def parrot_tester_ui():
             on_minimize=lambda: state.set("minimized", True),
             on_restore=lambda: state.set("minimized", False),
             on_close=parrot_tester_disable,
-            minimized_ui=minimized_ui,
+            minimized_body=minimized_body,
             minimized_style={
                 "position": "absolute",
                 "top": 100,

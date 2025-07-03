@@ -98,6 +98,27 @@ def stats_triplet(stat, decimal_places=2):
         ],
     ]
 
+def copy_button(name):
+    button, icon, state = actions.user.ui_elements(["button", "icon", "state"])
+
+    copied, set_copied = state.use_local("copied", False)
+
+    def copy_to_clipboard(name):
+        clip.set_text(get_stats_pretty_print(name))
+        set_copied(True)
+        try:
+            cron.after("2s", lambda: set_copied(False))
+        except Exception as e:
+            pass
+
+    return button(on_click=lambda: copy_to_clipboard(name), disabled=copied, padding=8, border_radius=8)[
+        icon(
+            "check" if copied else "copy",
+            size=20,
+            color="#28EB66" if copied else SECONDARY_COLOR
+        ),
+    ]
+
 def table_stats():
     div, text, icon, style = actions.user.ui_elements(["div", "text", "icon", "style"])
     table, th, tr, td = actions.user.ui_elements(["table", "th", "tr", "td"])
@@ -116,20 +137,6 @@ def table_stats():
         update_stats_state()
 
     effect(on_mount, [])
-
-    def copy_to_clipboard(name):
-        global cron_job
-        clip.set_text(get_stats_pretty_print(name))
-
-        set_copied({
-            name: True,
-            **{k: v for k, v in copied.items() if k != name}
-        })
-
-        cron_job = cron.after("2s", lambda s=actions.user.ui_elements_get_state("copied"): set_copied({
-            name: False,
-            **{k: v for k, v in s.items() if k != name}
-        }))
 
     style({
         "th": {
@@ -203,11 +210,8 @@ def table_stats():
                             number(str(round(pattern_stats["f2"]["average"]))),
                             number(str(round(pattern_stats["f2"]["max"]))),
                         ]],
-                        td(align_items="center", justify_content="center", position="relative")[
-                            button(on_click=lambda e, name=pattern_stats["name"]: copy_to_clipboard(name), padding=8, border_radius=8)[
-                                icon("copy", size=20, color=SECONDARY_COLOR),
-                            ],
-                            text("Copied!", position="absolute", text_align="center", bottom=6, left=0, right=0, margin_top=8, font_size=12) if copied.get(pattern_stats["name"], False) else None
+                        td(align_items="center", justify_content="center")[
+                            component(copy_button, pattern_stats["name"]),
                         ]
                     ] for pattern_stats in stats_list
                 ]
@@ -233,8 +237,6 @@ def page_stats():
 
     def on_mount(e):
         init_stats()
-        # print(f"Stats on mount: {s}")
-        # state.set("patterns_stats", s)
 
     effect(on_mount, [])
 

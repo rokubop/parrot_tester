@@ -21,8 +21,10 @@ cd ~/.talon/user
 # windows
 cd ~/AppData/Roaming/talon/user
 
-# clone both repositories
+# prerequisite
 git clone https://github.com/rokubop/talon-ui-elements.git
+
+# clone the Parrot Tester tool
 git clone https://github.com/rokubop/parrot_tester.git
 ```
 

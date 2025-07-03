@@ -149,14 +149,14 @@ def table_controls():
     }
 
     return div(flex_direction="row", gap=24, margin_right=8)[
-        div(flex_direction="row", gap=8, align_items="center")[
-            checkbox(checkbox_props, id="disable_actions", checked=disable_actions, on_change=lambda e: set_disable_actions(e.checked)),
-            text("Disable actions", for_id="disable_actions"),
-        ],
-        div(flex_direction="row", gap=8, align_items="center")[
-            checkbox(checkbox_props, id="double_pop_pause", checked=double_pop_pause, on_change=lambda e: set_double_pop_pause(e.checked)),
-            text("Double pop to pause", for_id="double_pop_pause"),
-        ],
+        # div(flex_direction="row", gap=8, align_items="center")[
+        #     checkbox(checkbox_props, id="disable_actions", checked=disable_actions, on_change=lambda e: set_disable_actions(e.checked)),
+        #     text("Disable actions", for_id="disable_actions"),
+        # ],
+        # div(flex_direction="row", gap=8, align_items="center")[
+        #     checkbox(checkbox_props, id="double_pop_pause", checked=double_pop_pause, on_change=lambda e: set_double_pop_pause(e.checked)),
+        #     text("Double pop to pause", for_id="double_pop_pause"),
+        # ],
         div(flex_direction="row", gap=8, align_items="center")[
             checkbox(checkbox_props, id="show_formants", checked=show_formants, on_change=lambda e: set_show_formants(e.checked)),
             text("Show F0, F1, F2", for_id="show_formants"),

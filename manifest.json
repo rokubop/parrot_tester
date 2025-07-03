@@ -6,9 +6,13 @@
   "github": "https://github.com/rokubop/parrot_tester",
   "preview": "https://github.com/rokubop/parrot_tester/preview.png",
   "author": "Rokubop",
-  "tags": ["parrot"],
+  "tags": [
+    "parrot"
+  ],
   "contributes": {
-    "tags": ["user.parrot_tester"],
+    "tags": [
+      "user.parrot_tester"
+    ],
     "actions": [
       "user.parrot_tester_restore_parrot_integration",
       "user.parrot_tester_toggle",
