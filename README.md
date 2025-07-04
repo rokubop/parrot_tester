@@ -32,6 +32,13 @@ Done! You can now use the Parrot Tester tool. 🎉
 
 Say "parrot tester" to toggle the UI and start testing!
 
+## Known Issues
+**Folders with dashes:** Does not work if `parrot_integration.py` is in a directory with dashes (e.g., `my-folder/`).
+
+**Fix:** Move the file to a folder without dashes in your Talon user directory.
+
+Plan to fix this in a future release.
+
 ## How it works
 
 A spy is attached to your existing `parrot_integration.py` file upon UI launch, and restored when the UI is closed.
