@@ -54,9 +54,6 @@ If grace thresholds are not working as expected, you may want to try changing th
 
 Before:
 ```python
-def match_pattern(self, frame: ParrotFrame, graceperiod_until: float):
-    return self.detect_all(frame, graceperiod_detection_calls) if frame.ts < graceperiod_until else self.detect_all(frame, detection_calls)
-
 throttles = {}
 if 'throttle' in pattern:
     if name not in pattern['throttle']:
@@ -66,9 +63,6 @@ if 'throttle' in pattern:
 
 After:
 ```python
-def match_pattern(self, frame: ParrotFrame, graceperiod_until: float):
-    return self.detect_all(frame, graceperiod_detection_calls) if frame.ts < graceperiod_until else self.detect_all(frame, detection_calls)
-
 throttles = {}
 if 'throttle' in pattern:
     # if name not in pattern['throttle']:
@@ -76,4 +70,4 @@ if 'throttle' in pattern:
     throttles = pattern['throttle']
 ```
 
-Grace thresholds should now work as expected, but you may need to add manually add "throttle" to every pattern now.
+Grace thresholds should now work as expected, but you may need to manually add "throttle" to every pattern now.
