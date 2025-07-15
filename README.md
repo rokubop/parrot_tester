@@ -32,12 +32,13 @@ Done! You can now use the Parrot Tester tool. 🎉
 
 Say "parrot tester" to toggle the UI and start testing!
 
-## Known Issues
-**Folders with dashes:** Does not work if `parrot_integration.py` is in a directory with dashes (e.g., `my-folder/`).
+## Known Limitations
+**Folder names with dashes:** Parrot Tester cannot work with `parrot_integration.py` files located in directory paths containing dashes (e.g., `my-folder/parrot_integration.py`).
 
-**Fix:** Move the file to a folder without dashes in your Talon user directory.
+**Options:** Either rename folders containing dashes to use underscores, or choose not to use this tool.
+- Example: `my-folder/parrot_integration.py` → `my_folder/parrot_integration.py`
 
-Plan to fix this in a future release.
+If you change a folder name, you may also need to update your `parrot_integration.py` file to point to new paths.
 
 ## How it works
 
@@ -46,3 +47,33 @@ A spy is attached to your existing `parrot_integration.py` file upon UI launch, 
 No destructive edits are done to your `parrot_integration.py` or `patterns.json`.
 
 If you somehow get into an error state, a Talon restart will restore everything to normal.
+
+## Grace thresholds not working
+
+If grace thresholds are not working as expected, you may want to try changing these lines in your `parrot_integration.py`. This bug was discovered as I was testing this tool.
+
+Before:
+```python
+def match_pattern(self, frame: ParrotFrame, graceperiod_until: float):
+    return self.detect_all(frame, graceperiod_detection_calls) if frame.ts < graceperiod_until else self.detect_all(frame, detection_calls)
+
+throttles = {}
+if 'throttle' in pattern:
+    if name not in pattern['throttle']:
+        pattern['throttle'][name] = 0
+    throttles = pattern['throttle']
+```
+
+After:
+```python
+def match_pattern(self, frame: ParrotFrame, graceperiod_until: float):
+    return self.detect_all(frame, graceperiod_detection_calls) if frame.ts < graceperiod_until else self.detect_all(frame, detection_calls)
+
+throttles = {}
+if 'throttle' in pattern:
+    # if name not in pattern['throttle']:
+    #     pattern['throttle'][name] = 0
+    throttles = pattern['throttle']
+```
+
+Grace thresholds should now work as expected, but you may need to add manually add "throttle" to every pattern now.

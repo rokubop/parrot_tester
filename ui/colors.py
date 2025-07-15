@@ -9,16 +9,16 @@ PATTERN_COLORS = [
     "#66B2FF",
     "#FF66CC",
     "#80FF00",
-    "#FFAA33",
-    "#FF4444",
-    "#33DDFF",
+    "#FFC573",
+    "#FF0000",
+    "#94EDFF",
     "#FFB3FF",
-    "#FFCC00",
+    "#DDB000",
     "#99FF99",
-    "#66FFFF",
+    "#00FFFF",
     "#CC66FF",
     "#FF9999",
-    "#00FFFC"
+    "#00B2AF"
 ]
 
 ACTIVE_COLOR = "#3B71D9"

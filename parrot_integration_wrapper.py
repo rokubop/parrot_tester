@@ -48,8 +48,26 @@ def load_patterns(path: Path) -> dict:
         return {}
 
 def build_relative_import_path(current_file: Path, target_file: Path) -> str:
-    if not all(part.isidentifier() for part in target_file.parts):
-        raise ValueError(f"Invalid import path - folder/file names must be valid Python identifiers: {target_file}")
+    # Check for invalid Python identifiers (like dashes) in the path
+    invalid_parts = [part for part in target_file.parts if not part.isidentifier()]
+    if invalid_parts:
+        error_msg = f"""
+PARROT TESTER LIMITATION: Cannot work with your current parrot_integration.py path
+
+Issue: Parrot Tester has a technical limitation with folder names containing dashes or special characters.
+Your file: {target_file}
+Problematic parts: {', '.join(invalid_parts)}
+
+Why: Parrot Tester uses Python import statements internally, which require valid identifiers
+(letters, numbers, underscores only).
+
+To use Parrot Tester: Rename folders containing dashes to use underscores, or choose not to use this tool.
+
+Example rename: {str(target_file).replace('-', '_')}
+
+Your folder naming is perfectly valid - this is just a technical constraint of this tool.
+"""
+        raise ValueError(error_msg)
 
     up_levels = len(current_file.parts)
     dot_prefix = "." * up_levels if up_levels > 0 else "."
@@ -735,22 +753,32 @@ def parrot_tester_initialize():
     """Test function to check if the paths are correct."""
     global patterns_json
     print("**** Starting Parrot Tester ****")
-    parrot_integration_path = get_parrot_integration_path().resolve()
-    patterns_py_path = get_patterns_py_path().resolve()
-    current_path = Path(__file__).resolve()
 
-    current = Path(__file__).parent.resolve()
-    target = Path(parrot_integration_path).resolve()
-    user_root = Path(TALON_USER).resolve()
+    try:
+        parrot_integration_path = get_parrot_integration_path().resolve()
+        patterns_py_path = get_patterns_py_path().resolve()
+        current_path = Path(__file__).resolve()
 
-    current_rel = current.relative_to(user_root)
-    target_rel = target.relative_to(user_root).with_suffix("")
+        current = Path(__file__).parent.resolve()
+        target = Path(parrot_integration_path).resolve()
+        user_root = Path(TALON_USER).resolve()
 
-    patterns_json = load_patterns(patterns_py_path)
+        current_rel = current.relative_to(user_root)
+        target_rel = target.relative_to(user_root).with_suffix("")
 
-    import_path = build_relative_import_path(current_rel, target_rel)
-    generate_parrot_integration_hook(import_path, current_path)
-    actions.user.parrot_tester_wrap_parrot_integration()
+        patterns_json = load_patterns(patterns_py_path)
+
+        import_path = build_relative_import_path(current_rel, target_rel)
+        generate_parrot_integration_hook(import_path, current_path)
+        actions.user.parrot_tester_wrap_parrot_integration()
+
+    except ValueError as e:
+        # This catches our detailed error message about invalid paths
+        print(str(e))
+        return
+    except Exception as e:
+        print(f"❌ PARROT TESTER ERROR: Failed to initialize: {e}")
+        return
 
 def restore_patterns_paused():
     actions.user.parrot_tester_restore_parrot_integration()
