@@ -15,8 +15,10 @@ from .colors import (
     ACTIVE_COLOR,
     BG_GRAY,
 )
-from ..parrot_integration_wrapper import (
+from ..parrot_integration_controller import (
     get_pattern_threshold_value,
+)
+from ..parrot_integration_wrapper import (
     populate_detection_log_state,
     set_detection_log_state_by_id,
 )

@@ -16,8 +16,11 @@ from .colors import (
     ACTIVE_COLOR,
     BG_GRAY,
 )
-from ..parrot_integration_wrapper import (
+from ..parrot_integration_controller import (
+    get_pattern_color,
     get_pattern_threshold_value,
+)
+from ..parrot_integration_wrapper import (
     init_stats,
     reset_stats,
     add_frame_to_stats,
@@ -26,12 +29,9 @@ from ..parrot_integration_wrapper import (
     update_stats_state,
     get_stats_pretty_print,
     format,
-    get_pattern_color,
     format_stats_multiline,
 )
-#60A5FA
-#A1A1AA
-#F87171
+
 def icon_triangle_up():
     svg, path = actions.user.ui_elements_svg(["svg", "path"])
 

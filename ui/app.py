@@ -1,5 +1,5 @@
 from talon import actions
-from ..parrot_integration_wrapper import (
+from ..parrot_integration_controller import (
     restore_patterns_paused,
     restore_patterns,
     parrot_tester_initialize

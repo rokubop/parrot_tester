@@ -1,5 +1,5 @@
 from talon import actions
-from ..parrot_integration_wrapper import (
+from ..parrot_integration_controller import (
     get_pattern_json,
     get_pattern_color,
 )
