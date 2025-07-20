@@ -8,34 +8,32 @@ from talon_init import TALON_HOME
 DEBUG_PATH_DISCOVERY = False
 
 def extract_pattern_path_from_parrot_integration(parrot_integration_path: Path) -> str | None:
-    """Parse parrot_integration.py to extract the pattern_path variable."""
     if DEBUG_PATH_DISCOVERY:
-        print(f"🔍 Parsing parrot_integration.py: {parrot_integration_path}")
+        print(f"Parsing parrot_integration.py: {parrot_integration_path}")
 
     try:
         with parrot_integration_path.open("r", encoding="utf-8") as f:
             content = f.read()
 
-        # Look for pattern_path = str(...) pattern (ignore commented lines)
+        # Look for pattern_path = str(...) pattern
         pattern_path_match = re.search(r'^\s*pattern_path\s*=\s*str\(([^)]+)\)', content, re.MULTILINE)
         if pattern_path_match:
             path_expr = pattern_path_match.group(1).strip()
             if DEBUG_PATH_DISCOVERY:
                 print(f"   Found pattern_path = str({path_expr})")
 
-            # Look for PARROT_HOME definition - handle both quoted and unquoted paths (ignore commented lines)
+            # Look for PARROT_HOME definition
             parrot_home_match = re.search(r'^\s*PARROT_HOME\s*=\s*TALON_HOME\s*/\s*[\'"]?([^\'")\s]+)[\'"]?', content, re.MULTILINE)
             if parrot_home_match and 'PARROT_HOME' in path_expr:
                 parrot_subpath = parrot_home_match.group(1)
                 if DEBUG_PATH_DISCOVERY:
                     print(f"   Found PARROT_HOME = TALON_HOME / '{parrot_subpath}'")
-                # Construct the full path
                 full_path = TALON_HOME / parrot_subpath / "patterns.json"
                 if DEBUG_PATH_DISCOVERY:
                     print(f"   Constructed path: {full_path}")
                 return str(full_path)
 
-        # Alternative: look for direct pattern_path assignment (ignore commented lines)
+        # Alternative: look for direct pattern_path assignment
         direct_match = re.search(r'^\s*pattern_path\s*=\s*[\'"]([^\'"]+)[\'"]', content, re.MULTILINE)
         if direct_match:
             path = direct_match.group(1)
@@ -81,11 +79,11 @@ def get_patterns_py_path():
     """Get the path to the patterns.json file using 3-stage fallback."""
 
     if DEBUG_PATH_DISCOVERY:
-        print("🔍 Starting patterns.json discovery process...")
+        print("Starting patterns.json discovery process...")
 
     # Stage 1: Try to parse parrot_integration.py to extract pattern_path
     if DEBUG_PATH_DISCOVERY:
-        print("📝 Stage 1: Parsing parrot_integration.py")
+        print("Stage 1: Parsing parrot_integration.py")
     try:
         parrot_integration_path = get_parrot_integration_path()
         if parrot_integration_path:
@@ -96,42 +94,42 @@ def get_patterns_py_path():
                 path_obj = Path(pattern_path)
                 if path_obj.exists():
                     if DEBUG_PATH_DISCOVERY:
-                        print(f"✅ Stage 1 SUCCESS: {pattern_path}")
+                        print(f"Stage 1 SUCCESS: {pattern_path}")
                     return path_obj
                 else:
                     if DEBUG_PATH_DISCOVERY:
-                        print(f"❌ Stage 1: Path doesn't exist: {pattern_path}")
+                        print(f"Stage 1: Path doesn't exist: {pattern_path}")
             else:
                 if DEBUG_PATH_DISCOVERY:
-                    print("❌ Stage 1: No pattern_path extracted")
+                    print("Stage 1: No pattern_path extracted")
         else:
             if DEBUG_PATH_DISCOVERY:
-                print("❌ Stage 1: No parrot_integration.py found")
+                print("Stage 1: No parrot_integration.py found")
     except Exception as e:
         if DEBUG_PATH_DISCOVERY:
-            print(f"❌ Stage 1 failed: {e}")
+            print(f"Stage 1 failed: {e}")
 
     # Stage 2: Try common location /talon/parrot/patterns.json
     if DEBUG_PATH_DISCOVERY:
-        print("📝 Stage 2: Checking common parrot location")
+        print("Stage 2: Checking common parrot location")
     try:
         parrot_patterns_path = TALON_HOME / "parrot" / "patterns.json"
         if DEBUG_PATH_DISCOVERY:
             print(f"   Checking: {parrot_patterns_path}")
         if parrot_patterns_path.exists():
             if DEBUG_PATH_DISCOVERY:
-                print(f"✅ Stage 2 SUCCESS: {parrot_patterns_path}")
+                print(f"Stage 2 SUCCESS: {parrot_patterns_path}")
             return parrot_patterns_path
         else:
             if DEBUG_PATH_DISCOVERY:
-                print("❌ Stage 2: File doesn't exist")
+                print("Stage 2: File doesn't exist")
     except Exception as e:
         if DEBUG_PATH_DISCOVERY:
-            print(f"❌ Stage 2 failed: {e}")
+            print(f"Stage 2 failed: {e}")
 
     # Stage 3: Fall back to searching within talon user directory
     if DEBUG_PATH_DISCOVERY:
-        print("📝 Stage 3: Searching in user directory")
+        print("Stage 3: Searching in user directory")
     try:
         talon_user_path = get_talon_user_path()
         if DEBUG_PATH_DISCOVERY:
@@ -149,17 +147,17 @@ def get_patterns_py_path():
         if matches:
             chosen = matches[0]
             if DEBUG_PATH_DISCOVERY:
-                print(f"✅ Stage 3 SUCCESS: Using first match: {chosen}")
+                print(f"Stage 3 SUCCESS: Using first match: {chosen}")
             return chosen
         else:
             if DEBUG_PATH_DISCOVERY:
-                print("❌ Stage 3: No patterns.json found in user directory")
+                print("Stage 3: No patterns.json found in user directory")
     except Exception as e:
         if DEBUG_PATH_DISCOVERY:
-            print(f"❌ Stage 3 failed: {e}")
+            print(f"Stage 3 failed: {e}")
 
     if DEBUG_PATH_DISCOVERY:
-        print("💥 ALL STAGES FAILED: Could not find patterns.json")
+        print("ALL STAGES FAILED: Could not find patterns.json")
     return None
 
 def load_patterns(path: Path) -> dict:
