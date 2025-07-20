@@ -12,7 +12,7 @@ class Actions:
         parrot_tester_toggle()
 
     def parrot_tester_integration_ready():
-        """Overrides with True when context is created/ready"""
+        """Overrides with True when hook is created/ready"""
         return False
 
     def parrot_tester_wrap_parrot_integration():

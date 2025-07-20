@@ -202,7 +202,12 @@ def pattern(props):
     show_throttles = props.get("show_throttles", True)
     show_grace = props.get("show_grace", True)
     small = props.get("small", False)
+    view = props.get("view", "full")
     # edit = props.get("edit", True)
+
+    if view != "full":
+        show_throttles = False
+        show_grace = False
 
     pattern_data = get_pattern_json(pattern_name)
     pattern_color = get_pattern_color(pattern_name)
@@ -247,6 +252,30 @@ def pattern(props):
     if highlight_when_active:
         pattern_props["id"] = f"pattern_{pattern_name}"
 
+    thresholds = pattern_data.get("threshold", {})
+
+    ordered_thresholds = []
+    if ">power" in thresholds:
+        ordered_thresholds.append((">power", thresholds[">power"]))
+    if ">probability" in thresholds:
+        ordered_thresholds.append((">probability", thresholds[">probability"]))
+
+    for key, value in thresholds.items():
+        if key not in [">power", ">probability"]:
+            ordered_thresholds.append((key, value))
+
+    threshold_groups = [ordered_thresholds[i:i + 2] for i in range(0, len(ordered_thresholds), 2)]
+
+    if view == "compact":
+        return div(pattern_props)[
+            div(flex_direction="row", gap=8, align_items="center", padding_bottom=8, justify_content="space_between")[
+                div(flex_direction="row", gap=8, align_items="center")[
+                    rect_color(pattern_color, size=14),
+                    text(pattern_name, font_size=18),
+                ],
+            ],
+        ]
+
     if small:
         return div(pattern_props)[
             div(flex_direction="row", gap=8, align_items="center", justify_content="space_between")[
@@ -257,16 +286,34 @@ def pattern(props):
             ],
             div(flex_direction="row", border_left=1, border_color=BORDER_COLOR_LIGHTER)[
                 table()[
-                    tr()[
-                        td(position="relative")[
-                            text(">power", font_size=14, color=ACCENT_COLOR),
-                        ],
-                        td(margin_right=16, position="relative")[
-                            number(pattern_data.get("threshold", {}).get(">power", "0")),
-                        ],
-                        td()[text(">probability", font_size=14, color=ACCENT_COLOR)],
-                        td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"))],
-                    ],
+                    *[
+                        tr()[
+                            *[
+                                item
+                                for k, v in group
+                                for item in [
+                                    td()[
+                                        text(k, font_size=14, color=ACCENT_COLOR),
+                                    ],
+                                    td(margin_right=16)[
+                                        number(v),
+                                    ],
+                                ]
+                            ] + ([None, None] if len(group) == 1 else [])  # Pad single items
+                        ]
+                        for group in threshold_groups
+                    ] if threshold_groups else [
+                        tr()[
+                            td(position="relative")[
+                                text(">power", font_size=14, color=ACCENT_COLOR),
+                            ],
+                            td(margin_right=16, position="relative")[
+                                number("0"),
+                            ],
+                            td()[text(">probability", font_size=14, color=ACCENT_COLOR)],
+                            td(margin_right=16)[number("0")],
+                        ]
+                    ]
                 ],
             ],
         ]
@@ -287,15 +334,33 @@ def pattern(props):
                 text(",".join(pattern_data.get("sounds", [])), font_size=14),
             ] if not small else None,
             table(padding=8, padding_bottom=0)[
-                tr()[
-                    td(position="relative")[
-                        text(">power", font_size=14, color=ACCENT_COLOR),
-                    ],
-                    td(margin_right=16, position="relative")[
-                        number(pattern_data.get("threshold", {}).get(">power", "0")),
-                    ],
-                    td()[text(">probability", font_size=14, color=ACCENT_COLOR)],
-                    td(margin_right=16)[number(pattern_data.get("threshold", {}).get(">probability", "0"))],
+                *[
+                    tr()[
+                        *[
+                            item
+                            for k, v in group
+                            for item in [
+                                td(position="relative")[
+                                    text(k, font_size=14, color=ACCENT_COLOR),
+                                ],
+                                td(margin_right=16, position="relative")[
+                                    number(v),
+                                ],
+                            ]
+                        ] + ([None, None] if len(group) == 1 else [])  # Pad single items
+                    ]
+                    for group in threshold_groups
+                ] if threshold_groups else [
+                    tr()[
+                        td(position="relative")[
+                            text(">power", font_size=14, color=ACCENT_COLOR),
+                        ],
+                        td(margin_right=16, position="relative")[
+                            number("0"),
+                        ],
+                        td()[text(">probability", font_size=14, color=ACCENT_COLOR)],
+                        td(margin_right=16)[number("0")],
+                    ]
                 ],
                 *[
                     tr()[
