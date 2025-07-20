@@ -47,7 +47,10 @@ def parrot_tester_toggle():
         parrot_tester_disable_and_hide()
     else:
         try:
-            parrot_tester_initialize()
+            is_first_time = parrot_tester_initialize()
+            if is_first_time:
+                # Wait for new file hook to generate and Talon to reload
+                actions.sleep("1000ms")
             actions.user.ui_elements_show(
                 parrot_tester_ui,
                 show_hints=False,

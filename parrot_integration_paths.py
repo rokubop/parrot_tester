@@ -5,7 +5,7 @@ import json
 import re
 from talon_init import TALON_HOME
 
-DEBUG_PATH_DISCOVERY = True
+DEBUG_PATH_DISCOVERY = False
 
 def extract_pattern_path_from_parrot_integration(parrot_integration_path: Path) -> str | None:
     """Parse parrot_integration.py to extract the pattern_path variable."""
@@ -199,9 +199,15 @@ Your folder naming is perfectly valid - this is just a technical constraint of t
 
     return f"{dot_prefix}.{target_module}"
 
-def generate_parrot_integration_hook(import_path: str, current_file: Path):
+def generate_parrot_integration_hook(import_path: str, current_file: Path) -> bool:
+    """
+    Generate the parrot_integration_hook.py file.
+    Returns True if this is the first time generating the file, False otherwise.
+    """
     target_dir = current_file.parent
     hook_file = target_dir / "parrot_integration_hook.py"
+
+    is_first_time = not hook_file.exists()
 
     code = f"""\
 # AUTO-GENERATED: Do not edit manually.
@@ -230,3 +236,5 @@ except ImportError:
 
     hook_file.write_text(code)
     print(f"Generated file: {hook_file}")
+
+    return is_first_time

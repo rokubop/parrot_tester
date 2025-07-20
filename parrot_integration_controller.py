@@ -32,8 +32,15 @@ def parrot_tester_initialize():
         set_patterns_json(patterns_data)
 
         import_path = build_relative_import_path(current_rel, target_rel)
-        generate_parrot_integration_hook(import_path, current_path)
+        is_first_time = generate_parrot_integration_hook(import_path, current_path)
+
+        if is_first_time:
+            print("First-time generation detected, waiting for Talon to reload...")
+            actions.sleep("500ms")
+
         actions.user.parrot_tester_wrap_parrot_integration()
+
+        return is_first_time
 
     except ValueError as e:
         # This catches our detailed error message about invalid paths
