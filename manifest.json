@@ -2,7 +2,7 @@
   "name": "parrot_tester",
   "title": "Parrot Tester",
   "description": "Visual tool for testing parrot integration with Talon",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "github": "https://github.com/rokubop/parrot_tester",
   "preview": "https://github.com/rokubop/parrot_tester/preview.png",
   "author": "Rokubop",
@@ -14,6 +14,7 @@
       "user.parrot_tester"
     ],
     "actions": [
+      "user.parrot_tester_integration_ready",
       "user.parrot_tester_restore_parrot_integration",
       "user.parrot_tester_toggle",
       "user.parrot_tester_wrap_parrot_integration"

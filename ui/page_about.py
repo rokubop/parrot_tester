@@ -60,7 +60,7 @@ def page_about():
                     td()[
                         link(
                             url="https://github.com/chaosparrot/parrot.py",
-                            # minimize_on_click=True,
+                            minimize_on_click=True,
                             flex_direction="row",
                             gap=8,
                             align_items="center"

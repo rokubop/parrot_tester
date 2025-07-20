@@ -1,5 +1,5 @@
 from talon import actions
-from ..parrot_integration_wrapper import (
+from ..parrot_integration_controller import (
     restore_patterns_paused,
     restore_patterns,
     parrot_tester_initialize
@@ -42,17 +42,19 @@ def parrot_tester_disable_and_hide():
     parrot_tester_disable()
     actions.user.ui_elements_hide_all()
 
+def on_initialize():
+    actions.user.ui_elements_show(
+        parrot_tester_ui,
+        show_hints=False,
+        min_version="0.9.0"
+    )
+
 def parrot_tester_toggle():
     if actions.user.ui_elements_is_active(parrot_tester_ui):
         parrot_tester_disable_and_hide()
     else:
         try:
-            parrot_tester_initialize()
-            actions.user.ui_elements_show(
-                parrot_tester_ui,
-                show_hints=False,
-                min_version="0.9.0"
-            )
+            parrot_tester_initialize(on_initialize)
         except Exception as e:
             # traceback.print_exc()
             print(f"Error initializing parrot tester: {e}")
@@ -91,7 +93,7 @@ def play_button():
         actions.user.ui_elements_toggle_hints(show_hints)
         set_play(new_play)
         if new_play:
-            parrot_tester_initialize()
+            parrot_tester_initialize(on_initialize)
         else:
             parrot_tester_pause()
 

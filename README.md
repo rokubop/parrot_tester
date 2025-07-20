@@ -35,7 +35,7 @@ Say "parrot tester" to toggle the UI and start testing!
 ## Known Limitations
 **Folder names with dashes:** Parrot Tester cannot work with `parrot_integration.py` files located in directory paths containing dashes (e.g., `my-folder/parrot_integration.py`).
 
-**Options:** Either rename folders containing dashes to use underscores, or choose not to use this tool.
+**Options:** Either rename folders containing dashes to use underscores, or move your `parrot_integration.py` file to a different location that does not contain dashes.
 - Example: `my-folder/parrot_integration.py` → `my_folder/parrot_integration.py`
 
 If you change a folder name, you may also need to update your `parrot_integration.py` file to point to new paths.
