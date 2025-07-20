@@ -183,7 +183,7 @@ Problematic parts: {', '.join(invalid_parts)}
 Why: Parrot Tester uses Python import statements internally, which require valid identifiers
 (letters, numbers, underscores only).
 
-To use Parrot Tester: Rename folders containing dashes to use underscores, or choose not to use this tool.
+To use Parrot Tester: Rename folders containing dashes to use underscores, or move the parrot_integration.py elsewhere.
 
 Example rename: {str(target_file).replace('-', '_')}
 
