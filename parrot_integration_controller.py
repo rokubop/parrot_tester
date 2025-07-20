@@ -1,5 +1,5 @@
 from pathlib import Path
-from talon import actions
+from talon import actions, cron
 from talon_init import TALON_USER
 from .ui.colors import get_color
 from .parrot_integration_paths import (
@@ -12,7 +12,16 @@ from .parrot_integration_paths import (
 
 patterns_json = {}
 
-def parrot_tester_initialize():
+def wait_for_ready(callback, attempts=0):
+    is_ready = actions.user.parrot_tester_integration_ready()
+    if is_ready:
+        callback()
+    elif attempts < 10:
+        cron.after("500ms", lambda: wait_for_ready(callback, attempts + 1))
+    else:
+        print("Parrot Tester could not initialize after 10 attempts (5 seconds total waited)")
+
+def parrot_tester_initialize(callback):
     """Test function to check if the paths are correct."""
     print("**** Starting Parrot Tester ****")
 
@@ -32,15 +41,13 @@ def parrot_tester_initialize():
         set_patterns_json(patterns_data)
 
         import_path = build_relative_import_path(current_rel, target_rel)
-        is_first_time = generate_parrot_integration_hook(import_path, current_path)
+        generate_parrot_integration_hook(import_path, current_path)
 
-        if is_first_time:
-            print("First-time generation detected, waiting for Talon to reload...")
-            actions.sleep("500ms")
+        def on_ready():
+            actions.user.parrot_tester_wrap_parrot_integration()
+            callback()
 
-        actions.user.parrot_tester_wrap_parrot_integration()
-
-        return is_first_time
+        wait_for_ready(on_ready)
 
     except ValueError as e:
         # This catches our detailed error message about invalid paths

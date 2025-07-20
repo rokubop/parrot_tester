@@ -11,6 +11,10 @@ class Actions:
         """Toggle parrot tester"""
         parrot_tester_toggle()
 
+    def parrot_tester_integration_ready():
+        """Overrides with True when context is created/ready"""
+        return False
+
     def parrot_tester_wrap_parrot_integration():
         """Wrap parrot_integration file for introspection - Automatically overwritten by context"""
         actions.skip()

@@ -205,8 +205,6 @@ def generate_parrot_integration_hook(import_path: str, current_file: Path) -> bo
     target_dir = current_file.parent
     hook_file = target_dir / "parrot_integration_hook.py"
 
-    is_first_time = not hook_file.exists()
-
     code = f"""\
 # AUTO-GENERATED: Do not edit manually.
 # This provides Talon access to parrot_delegate via actions,
@@ -223,6 +221,9 @@ try:
 
     @ctx.action_class("user")
     class Actions:
+        def parrot_tester_integration_ready():
+            return True
+
         def parrot_tester_wrap_parrot_integration():
             parrot_tester_wrap_parrot_integration(parrot_delegate)
 
@@ -234,5 +235,3 @@ except ImportError:
 
     hook_file.write_text(code)
     print(f"Generated file: {hook_file}")
-
-    return is_first_time
