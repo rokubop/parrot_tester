@@ -14,6 +14,7 @@
       "user.parrot_tester"
     ],
     "actions": [
+      "user.parrot_tester_integration_ready",
       "user.parrot_tester_restore_parrot_integration",
       "user.parrot_tester_toggle",
       "user.parrot_tester_wrap_parrot_integration"
